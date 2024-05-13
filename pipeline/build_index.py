@@ -1,1 +1,0 @@
-../../pipeline/build_index.py
