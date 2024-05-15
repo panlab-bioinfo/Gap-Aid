@@ -64,12 +64,19 @@ version 240510
 ```
 ### Output file description
 The files needed by Gap-aid are in the $prefix_workdir
+
 There are 12 files.
+
 *.chr.fa is the scaffold that your input
+
 *reads.\* is filtered reads
+
 *infor.txt is the scaffold gap information
+
 *map.final.paf\* is the alignments of scaffold and reads
+
 *ovlp.final.paf\* is the alignments of reads and reads
+
 *.score.txt\* is the score we use to recommend the reads
 
 
