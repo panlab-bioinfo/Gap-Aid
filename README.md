@@ -87,10 +87,13 @@ There are 12 files.
 
 
 
-2.Using Gap-Aid
+## Using Gap-Aid
 
 *Gap-Aidv1.0* is a binary program under Linux.
 
-*Gap-Aidv1.0.exe* is a binary program under windows.
+Run *Gap-Aidv1.0* Under the Gap-Aid folder
 
 Gap-Aidv1.0 compiled by gcc9.4.0,too low gcc version may cause problems.
+
+
+*Gap-Aidv1.0.exe* is a binary program under windows.
