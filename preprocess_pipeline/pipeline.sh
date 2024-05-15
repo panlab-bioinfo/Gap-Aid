@@ -1,6 +1,6 @@
 #!/bin/bash
 ###mapped genomes and reads overlap pipeline
-version=231205
+version=240510
 echo $(readlink -f $0)" "$*
 echo "version: "${version}
 USAGE_short="
@@ -451,7 +451,7 @@ suffix=$(echo $orig_reads | awk -F'.' '{print $NF}')
 chr_fa=$(realpath ${orig_fasta})
 mkdir -p ${prefix}_workdir && cd ${prefix}_workdir
 ln -sf ${chr_fa} ./${prefix}.chr.fa
-ln -sf ../*infor.txt .
+ln -sf ../*infor.txt ./${prefix}.chr.fa.infor.txt
 ln -sf ../max_reads.txt .
 ln -sf ../*.final.paf* .
 ln -sf ../*.score.txt* .
