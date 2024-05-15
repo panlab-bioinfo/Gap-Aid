@@ -403,7 +403,7 @@ else
     echo "step4.1 complete" >step4.1_done.tag
 fi
 
-python $(dirname "$(readlink -f "$0")")/recommand.py ${prefix}.map.final.paf ${prefix}.ovlp.score.txt
+python $(dirname "$(readlink -f "$0")")/recommand.py ${prefix}.ovlp.final.paf ${prefix}.ovlp.score.txt
 if [ $? -ne 0 ]; then
     echo "step4.2 process error"
     exit 1
