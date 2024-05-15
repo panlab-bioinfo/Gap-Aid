@@ -21,16 +21,21 @@ The preprocess program  can only be used on Linux systems
 ## Prerequisites
 
 * python>=3.8
-* minimap2
-* seqkit
-* jellyfish
-* rafilter
+* minimap2 https://github.com/lh3/minimap2.git
+* seqkit https://github.com/shenwei356/seqkit.git
+* jellyfish https://github.com/gmarcais/Jellyfish.git
+* rafilter https://github.com/panlab-bioinfo/RAfilter
 
 
 ### Usage Details
+cd Gap-Aid/preprocess/pipeline.sh
+chmod + x pipeline.sh
+
+Run pipeline.sh with full paths or add pipeline.sh to environment PATH
+
 
 ```bash  
-version 240510
+    version 240510
 
     USAGE: ./pipeline.sh [options]  <path_to_input_chromosomes> <path_to_input_reads>
 
