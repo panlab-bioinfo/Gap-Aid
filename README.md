@@ -28,11 +28,12 @@ The preprocess program  can only be used on Linux systems
 
 
 ### Usage Details
+```bash
 cd Gap-Aid/preprocess/pipeline.sh
 chmod + x pipeline.sh
+```
 
 Run pipeline.sh with full paths or add pipeline.sh to environment PATH
-
 
 ```bash  
     version 240510
