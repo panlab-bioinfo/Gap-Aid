@@ -336,7 +336,7 @@ if [ "$filter" == "yes" ];then
         exit 1
     fi
 else
-    awk '!($1 == $5)' ${prefix}.ovlp.sim.paf ${prefix}.ovlp.filter.paf
+    awk '!($1 == $5)' ${prefix}.ovlp.sim.paf > ${prefix}.ovlp.filter.paf
 fi
 if [ $? -ne 0 ];then
         echo "step2.3 process error"
