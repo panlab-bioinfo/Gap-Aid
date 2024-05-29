@@ -236,217 +236,240 @@ if [ -z "$map_arg" ]; then
 fi
 echo $(date +"%Y-%m-%d %H:%M:%S")
 
-
 ##########1.alignment#############
 
 ######step1.1##########
 #ref
-echo "map to chromosomes ";
-echo "${minimap2} ${map_arg} -t ${threads} ${orig_fasta} ${orig_reads} > ${prefix}.map.paf 2>map.log"
-${minimap2} ${map_arg} -t ${threads} ${orig_fasta} ${orig_reads} > ${prefix}.map.paf 2>map.log
-awk '{print $2}' ${prefix}.map.paf | sort -nr | head -n 1 > max_reads.txt
-if [ $? -ne 0 ];then
-    echo "map process error"
-    exit 1
-else
-    echo "map to chr complete" > step1.1_done.tag
+echo "map to chromosomes "
+if [ ! -f "step1.1_done.tag" ]; then
+    echo "${minimap2} ${map_arg} -t ${threads} ${orig_fasta} ${orig_reads} > ${prefix}.map.paf 2>map.log"
+    ${minimap2} ${map_arg} -t ${threads} ${orig_fasta} ${orig_reads} >${prefix}.map.paf 2>map.log
+    if [ $? -ne 0 ]; then
+        echo "map process error"
+        exit 1
+    fi
+    awk '{print $2}' ${prefix}.map.paf | sort -nr | head -n 1 >max_reads.txt
+    if [ $? -ne 0 ]; then
+        echo "map process error"
+        exit 1
+    fi
+    echo "map to chr complete" >step1.1_done.tag
 fi
 echo $(date +"%Y-%m-%d %H:%M:%S")
 
 #######step1.2##########
 #query
 echo "get reads overlap"
+if [ ! -f "step1.2_done.tag" ]; then
+    if [ "$zip" == "yes" ]; then
+        echo "${minimap2} ${ava_arg} -t ${threads} ${orig_reads} ${orig_reads}  2>ovlp.log |gzip -1 ${prefix}.ovlp.paf.gz"
+        ${minimap2} ${ava_arg} -t ${threads} ${orig_reads} ${orig_reads} 2>ovlp.log | gzip -1 ${prefix}.ovlp.paf.gz
+    else
+        echo "${minimap2} ${ava_arg} -t ${threads} ${orig_reads} ${orig_reads} >${prefix}.ovlp.paf 2>ovlp.log"
+        ${minimap2} ${ava_arg} -t ${threads} ${orig_reads} ${orig_reads} >${prefix}.ovlp.paf 2>ovlp.log
+    fi
 
-if [ "$zip" == "yes" ];then
-    echo "${minimap2} ${ava_arg} -t ${threads} ${orig_reads} ${orig_reads}  2>ovlp.log |gzip -1 ${prefix}.ovlp.paf.gz"
-    ${minimap2} ${ava_arg} -t ${threads} ${orig_reads} ${orig_reads}  2>ovlp.log |gzip -1 ${prefix}.ovlp.paf.gz
-else
-    echo "${minimap2} ${ava_arg} -t ${threads} ${orig_reads} ${orig_reads} >${prefix}.ovlp.paf 2>ovlp.log"
-    ${minimap2} ${ava_arg} -t ${threads} ${orig_reads} ${orig_reads} >${prefix}.ovlp.paf 2>ovlp.log
-fi
-
-if [ $? -ne 0 ];then
+    if [ $? -ne 0 ]; then
         echo "overlap process error"
         exit 1
-else
-    echo "get reads overlap complete" > step1.2_done.tag
+    else
+        echo "get reads overlap complete" >step1.2_done.tag
+    fi
 fi
 echo $(date +"%Y-%m-%d %H:%M:%S")
-
 
 ##########2.filter############
 
 #######step2.1##########
-cut -f1-12 ${prefix}.map.paf >${prefix}.map.sim.paf
-if [ $? -ne 0 ];then
+if [ ! -f "step2.1_done.tag" ]; then
+    cut -f1-12 ${prefix}.map.paf >${prefix}.map.sim.paf
+    if [ $? -ne 0 ]; then
         echo "step2.1 cut process error"
         exit 1
-fi
-if [ "$filter" == "yes" ];then
-    python $(dirname "$(readlink -f "$0")")/dynamic_programming.py ${prefix}.map.sim.paf ${prefix}.map.filter.paf
-    if [ $? -ne 0 ];then
-        echo "filter map process error"
-        exit 1
     fi
-    mv ${prefix}.map.filter.paf ${prefix}.map.sim.paf
-fi
-if [ $? -ne 0 ];then
+    if [ "$filter" == "yes" ]; then
+        python $(dirname "$(readlink -f "$0")")/dynamic_programming.py ${prefix}.map.sim.paf ${prefix}.map.filter.paf
+        if [ $? -ne 0 ]; then
+            echo "filter map process error"
+            exit 1
+        fi
+        mv ${prefix}.map.filter.paf ${prefix}.map.sim.paf
+    fi
+    if [ $? -ne 0 ]; then
         echo "step2.1 process error"
         exit 1
-else
-    echo "step2.1 complete" > step2.1_done.tag
+    else
+        echo "step2.1 complete" >step2.1_done.tag
+    fi
 fi
 echo $(date +"%Y-%m-%d %H:%M:%S")
 
 #######step2.2#########
-python $(dirname "$(readlink -f "$0")")/mask.py ${orig_fasta} ${mask_length}
-suffix=$(echo $orig_reads | awk -F'.' '{print $NF}')
-if [ "$mask_length" -ne 0 ];then
-    ${minimap2} ${map_arg} -t ${threads} ${orig_fasta}_masked ${orig_reads} >${prefix}_useless_map.paf 2>useless_map.log
-    awk -v mapq=$MapQ -v al=$aligned_length '{if ($12>mapq && $10>al) print $1}' ${prefix}_useless_map.paf|sort |uniq > filtered_reads.txt
-    seqkit grep -v -f filtered_reads.txt $orig_reads >${prefix}_useful.reads.${suffix}
-    # ${minimap2} ${ava_arg} -t ${threads} ${prefix}_useful.hifi.${suffix} ${prefix}_useful.hifi.${suffix} >${prefix}.ovlp.paf 2>ovlp.log
-    # awk '{print $1}' ${prefix}_no_use_map.paf |sort |uniq >remove_reads.txt
-    if [ "$zip" == "yes" ];then
-        zcat ${prefix}.ovlp.paf.gz | grep -vFf filtered_reads.txt  | cut -f1-12 > ${prefix}.ovlp.sim.paf
+if [ ! -f "step2.2_done.tag" ]; then
+    python $(dirname "$(readlink -f "$0")")/mask.py ${orig_fasta} ${mask_length}
+    suffix=$(echo $orig_reads | awk -F'.' '{print $NF}')
+    if [ "$mask_length" -ne 0 ]; then
+        ${minimap2} ${map_arg} -t ${threads} ${orig_fasta}_masked ${orig_reads} >${prefix}_useless_map.paf 2>useless_map.log
+        awk -v mapq=$MapQ -v al=$aligned_length '{if ($12>mapq && $10>al) print $1}' ${prefix}_useless_map.paf | sort | uniq >filtered_reads.txt
+        seqkit grep -v -f filtered_reads.txt $orig_reads >${prefix}_useful.reads.${suffix}
+        # ${minimap2} ${ava_arg} -t ${threads} ${prefix}_useful.hifi.${suffix} ${prefix}_useful.hifi.${suffix} >${prefix}.ovlp.paf 2>ovlp.log
+        # awk '{print $1}' ${prefix}_no_use_map.paf |sort |uniq >remove_reads.txt
+        if [ "$zip" == "yes" ]; then
+            zcat ${prefix}.ovlp.paf.gz | grep -vFf filtered_reads.txt | cut -f1-12 >${prefix}.ovlp.sim.paf
+        else
+            grep -vFf filtered_reads.txt ${prefix}.ovlp.paf | cut -f1-12 >${prefix}.ovlp.sim.paf
+        fi
+        if [ $? -ne 0 ]; then
+            echo "reduce overlap alignments process error"
+            exit 1
+        fi
     else
-        grep -vFf filtered_reads.txt ${prefix}.ovlp.paf | cut -f1-12 >${prefix}.ovlp.sim.paf
+        cut -f1-12 ${prefix}.ovlp.paf >${prefix}.ovlp.sim.paf
     fi
-    if [ $? -ne 0 ];then
-        echo "reduce overlap alignments process error"
-        exit 1
-    fi
-else
-    cut -f1-12 ${prefix}.ovlp.paf >${prefix}.ovlp.sim.paf
-fi
-if [ $? -ne 0 ];then
+    if [ $? -ne 0 ]; then
         echo "step2.2 process error"
         exit 1
-else
-    echo "step2.2 complete" > step2.2_done.tag
+    else
+        echo "step2.2 complete" >step2.2_done.tag
+    fi
 fi
 echo $(date +"%Y-%m-%d %H:%M:%S")
 
 #######step2.3##########
-if [ "$filter" == "yes" ];then
-    python $(dirname "$(readlink -f "$0")")/dynamic_programming.py ${prefix}.ovlp.sim.paf ${prefix}.ovlp.filter.paf
-    mv ${prefix}.ovlp.filter.paf ${prefix}.ovlp.sim.paf
-    if [ $? -ne 0 ];then
-        echo "filter overlap process error"
-        exit 1
+if [ ! -f "step2.3_done.tag" ]; then
+
+    if [ "$filter" == "yes" ]; then
+        python $(dirname "$(readlink -f "$0")")/dynamic_programming.py ${prefix}.ovlp.sim.paf ${prefix}.ovlp.filter.paf
+        mv ${prefix}.ovlp.filter.paf ${prefix}.ovlp.sim.paf
+        if [ $? -ne 0 ]; then
+            echo "filter overlap process error"
+            exit 1
+        fi
+    else
+        awk '!($1 == $5)' ${prefix}.ovlp.sim.paf >${prefix}.ovlp.filter.paf
+        mv ${prefix}.ovlp.filter.paf ${prefix}.ovlp.sim.paf
     fi
-else
-    awk '!($1 == $5)' ${prefix}.ovlp.sim.paf > ${prefix}.ovlp.filter.paf
-fi
-if [ $? -ne 0 ];then
+    if [ $? -ne 0 ]; then
         echo "step2.3 process error"
         exit 1
-else
-    echo "step2.3 complete" > step2.3_done.tag
+    else
+        echo "step2.3 complete" >step2.3_done.tag
+    fi
 fi
 echo $(date +"%Y-%m-%d %H:%M:%S")
 
 ###########3.rafliter################
 
 #######step3.1##########
-if [ -z "$orig_contig" ]; then
-    ${jellyfish} count -m 21 -s 1G -t ${threads} -C -o ${prefix}.kmers.count ${orig_fasta}
-else
-    ${jellyfish} count -m 21 -s 1G -t ${threads} -C -o ${prefix}.kmers.count ${orig_contig}
-fi
-${jellyfish} dump -c -t -U 1 ${prefix}.kmers.count >${prefix}.kmers.dump
-if [ $? -ne 0 ]; then
-    echo "jellyfish  process error"
-    exit 1
-fi
-if [ $? -ne 0 ]; then
-    echo "step3.1 process error"
-    exit 1
-else
-    echo "step3.1 complete" >step3.1_done.tag
+if [ ! -f "step3.1_done.tag" ]; then
+
+    if [ -z "$orig_contig" ]; then
+        ${jellyfish} count -m 21 -s 1G -t ${threads} -C -o ${prefix}.kmers.count ${orig_fasta}
+    else
+        ${jellyfish} count -m 21 -s 1G -t ${threads} -C -o ${prefix}.kmers.count ${orig_contig}
+    fi
+    ${jellyfish} dump -c -t -U 1 ${prefix}.kmers.count >${prefix}.kmers.dump
+    if [ $? -ne 0 ]; then
+        echo "jellyfish  process error"
+        exit 1
+    fi
+    if [ $? -ne 0 ]; then
+        echo "step3.1 process error"
+        exit 1
+    else
+        echo "step3.1 complete" >step3.1_done.tag
+    fi
 fi
 echo $(date +"%Y-%m-%d %H:%M:%S")
 
 #######step3.2##########
-${rafilter} build -o ./ -r ${orig_fasta} -q ${orig_reads} ${prefix}.kmers.dump
-if [ $? -ne 0 ]; then
-    echo "rafilter build process error"
-    exit 1
+if [ ! -f "step3.2.1_done.tag" ]; then
+    ${rafilter} build -o ./ -r ${orig_fasta} -q ${orig_reads} ${prefix}.kmers.dump
+    if [ $? -ne 0 ]; then
+        echo "rafilter build process error"
+        exit 1
+    else
+        echo "step3.2.1 complete" >step3.2.1_done.tag
+    fi
 fi
-${rafilter} filter -o ref_result -t ${threads} ref.pos query.pos ${prefix}.map.sim.paf &>ref.filter.log
-if [ $? -ne 0 ]; then
-    echo "rafilter filter map process error"
-    exit 1
+
+if [ ! -f "step3.2.2_done.tag" ]; then
+    ${rafilter} filter -o ref_result -t ${threads} ref.pos query.pos ${prefix}.map.sim.paf &>ref.filter.log
+    if [ $? -ne 0 ]; then
+        echo "rafilter filter map process error"
+        exit 1
+    else
+        echo "step3.2.2 complete" >step3.2.2_done.tag
+    fi
 fi
-${rafilter} filter -o qry_result -t ${threads} query.pos query.pos ${prefix}.ovlp.sim.paf &>qry.filter.log
-if [ $? -ne 0 ]; then
-    echo "rafilter filter overlap process error"
-    exit 1
+
+if [ ! -f "step3.2.3_done.tag" ]; then
+    ${rafilter} filter -o qry_result -t ${threads} query.pos query.pos ${prefix}.ovlp.sim.paf &>qry.filter.log
+    if [ $? -ne 0 ]; then
+        echo "rafilter filter overlap process error"
+        exit 1
+    else
+        echo "step3.2.3 complete" >step3.2.3_done.tag
+    fi
 fi
 sort -k6,6 ref_result/rafiltered.paf >${prefix}.map.final.paf
 sort -k6,6 qry_result/rafiltered.paf >${prefix}.ovlp.final.paf
 if [ $? -ne 0 ]; then
     echo "step3.2 process error"
     exit 1
-else
-    echo "step3.2 complete" >step3.2_done.tag
 fi
 echo $(date +"%Y-%m-%d %H:%M:%S")
-
-
 
 ###########4.recommand################
-
-python $(dirname "$(readlink -f "$0")")/recommand.py ${prefix}.map.final.paf ${prefix}.map.score.txt
-if [ $? -ne 0 ]; then
-    echo "step4.1 process error"
-    exit 1
-else
-    echo "step4.1 complete" >step4.1_done.tag
+if [ ! -f "step4.1_done.tag" ]; then
+    python $(dirname "$(readlink -f "$0")")/recommand.py ${prefix}.map.final.paf ${prefix}.map.score.txt
+    if [ $? -ne 0 ]; then
+        echo "step4.1 process error"
+        exit 1
+    else
+        echo "step4.1 complete" >step4.1_done.tag
+    fi
 fi
 
-python $(dirname "$(readlink -f "$0")")/recommand.py ${prefix}.ovlp.final.paf ${prefix}.ovlp.score.txt
-if [ $? -ne 0 ]; then
-    echo "step4.2 process error"
-    exit 1
-else
-    echo "step4.2 complete" >step5.2_done.tag
+if [ ! -f "step4.2_done.tag" ]; then
+    python $(dirname "$(readlink -f "$0")")/recommand.py ${prefix}.ovlp.final.paf ${prefix}.ovlp.score.txt
+    if [ $? -ne 0 ]; then
+        echo "step4.2 process error"
+        exit 1
+    else
+        echo "step4.2 complete" >step4.2_done.tag
+    fi
 fi
 echo $(date +"%Y-%m-%d %H:%M:%S")
-
 
 ###########5.build index#############
+if [ ! -f "step5_done.tag" ]; then
+    python $(dirname "$(readlink -f "$0")")/build_index.py ${prefix}.map.final.paf
+    if [ $? -ne 0 ]; then
+        echo "step5.1 process error"
+        exit 1
 
-python $(dirname "$(readlink -f "$0")")/build_index.py ${prefix}.map.final.paf
-if [ $? -ne 0 ]; then
-    echo "step5.1 process error"
-    exit 1
-else
-    echo "step5.1 complete" >step5.1_done.tag
-fi
-python $(dirname "$(readlink -f "$0")")/build_index.py ${prefix}.ovlp.final.paf
-if [ $? -ne 0 ]; then
-    echo "step5.2 process error"
-    exit 1
-else
-    echo "step5.2 complete" >step5.2_done.tag
-fi
-python $(dirname "$(readlink -f "$0")")/build_index.py ${prefix}.map.score.txt
-if [ $? -ne 0 ]; then
-    echo "step5.3 process error"
-    exit 1
-else
-    echo "step5.3 complete" >step5.3_done.tag
-fi
-python $(dirname "$(readlink -f "$0")")/build_index.py ${prefix}.ovlp.score.txt
-if [ $? -ne 0 ]; then
-    echo "step5.4 process error"
-    exit 1
-else
-    echo "step5.4 complete" >step5.4_done.tag
+    fi
+    python $(dirname "$(readlink -f "$0")")/build_index.py ${prefix}.ovlp.final.paf
+    if [ $? -ne 0 ]; then
+        echo "step5.2 process error"
+        exit 1
+    fi
+
+    python $(dirname "$(readlink -f "$0")")/build_index.py ${prefix}.map.score.txt
+    if [ $? -ne 0 ]; then
+        echo "step5.3 process error"
+        exit 1
+    fi
+    python $(dirname "$(readlink -f "$0")")/build_index.py ${prefix}.ovlp.score.txt
+    if [ $? -ne 0 ]; then
+        echo "step5.4 process error"
+        exit 1
+    fi
+    echo "step5 complete" >step5_done.tag
+
 fi
 echo $(date +"%Y-%m-%d %H:%M:%S")
-
 
 ##########6.make workdir##############
 suffix=$(echo $orig_reads | awk -F'.' '{print $NF}')
@@ -457,7 +480,7 @@ ln -sf ../*infor.txt ./${prefix}.chr.fa.infor.txt
 ln -sf ../max_reads.txt .
 ln -sf ../*.final.paf* .
 ln -sf ../*.score.txt* .
-if [ "$mask_length" -ne 0 ];then
+if [ "$mask_length" -ne 0 ]; then
     ln -sf ../${prefix}_useful.reads.${suffix} .
 else
     ln -sf ../${orig_fasta} ./${prefix}.reads.${suffix}
