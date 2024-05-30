@@ -262,8 +262,8 @@ echo $(date +"%Y-%m-%d %H:%M:%S")
 echo "get reads overlap"
 if [ ! -f "step1.2_done.tag" ]; then
     if [ "$zip" == "yes" ]; then
-        echo "${minimap2} ${ava_arg} -t ${threads} ${orig_reads} ${orig_reads}  2>ovlp.log |gzip -1 ${prefix}.ovlp.paf.gz"
-        ${minimap2} ${ava_arg} -t ${threads} ${orig_reads} ${orig_reads} 2>ovlp.log | gzip -1 ${prefix}.ovlp.paf.gz
+        echo "${minimap2} ${ava_arg} -t ${threads} ${orig_reads} ${orig_reads}  2>ovlp.log |gzip -1 > ${prefix}.ovlp.paf.gz"
+        ${minimap2} ${ava_arg} -t ${threads} ${orig_reads} ${orig_reads} 2>ovlp.log | gzip -1 > ${prefix}.ovlp.paf.gz
     else
         echo "${minimap2} ${ava_arg} -t ${threads} ${orig_reads} ${orig_reads} >${prefix}.ovlp.paf 2>ovlp.log"
         ${minimap2} ${ava_arg} -t ${threads} ${orig_reads} ${orig_reads} >${prefix}.ovlp.paf 2>ovlp.log
