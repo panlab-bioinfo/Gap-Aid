@@ -73,9 +73,9 @@ the raw reads file must be fatsa format,any compressed files are not supported
 
 ### Parameter Description
 Short Parameter  |  Long Parameter |  Description
---------|-----------|-----------------------
+--------|------------------|-----------------------
 -p | --prefix | The prefix of output files.  
--r | --reads_type | The reads type.  You can choose hifi or ont. (default:hifi)  
+-r | --reads_type| The reads type.  You can choose hifi or ont. (default:hifi)  
 -m | --mask | To avoid the influence of repeated sequences near the gap, you can choose to mask the sequences before and after the gap. The default length is 500k  
 -c | --contig | Contigs used to assemble scaffolds to obtain more comprehensive kmer information  
 -re |--reliable | Use alignment length and alignment quality to filter alignments. By default, alignments with mapq>10 and alignment length greater than 500 are considered high-quality alignments. In non-gap regions, the reads corresponding to such alignments will be filtered out.  
