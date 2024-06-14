@@ -2,7 +2,7 @@
 
 
 
-### Installation
+## Installation
 
 
 1. Linux:
@@ -27,7 +27,7 @@ The preprocess program  can only be used on Linux systems
 * rafilter https://github.com/panlab-bioinfo/RAfilter
 
 
-### Usage Details
+## Usage Details
 ```bash
 cd Gap-Aid/preprocess/pipeline.sh
 chmod + x pipeline.sh
