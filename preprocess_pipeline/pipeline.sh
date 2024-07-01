@@ -22,9 +22,10 @@ OPTIONS:
 -r|--reads_type     The reads type. (default:hifi)
 -m|--mask           The length of the proximity gap you want to mask (default:500000).
 -c|--contig         Specify path to assembly fasta file.
--re|--reliable      The alignment you think are reliable ,format:'MapQ aligned_length'.default:'10 500'
--f|--filter         Do you want to filter the alignment? default:no
--z|--zip            Do you want to compressed the alignment file with gzip ? default:no
+-re|--reliable      The alignment you think are reliable ,format:'MapQ aligned_length'.(default:'10 500')
+-l|--length         The Alignment block length you think are unreliable.(default:500)
+-f|--filter         Do you want to filter the alignment? (default:no)
+-z|--zip            Do you want to compressed the alignment file with gzip ? (default:no)
 -t|--threads        Number of threads(default:4)
 --aligner           minimap2/winnowmap(default:minimap2) 
 --map_arg           map args ex:'-x map-hifi';
@@ -43,6 +44,7 @@ reads_type="hifi"
 mask_length=500000
 MapQ=10
 aligned_length=500
+align_length=500
 filter="no"
 zip="no"
 aligner="minimap2"
@@ -85,6 +87,17 @@ while :; do
         reliable=$OPTARG
         MapQ=$(echo $reliable | awk -F' ' '{print $1}')
         aligned_length=$(echo $reliable | awk -F' ' '{print $2}')
+        shift
+        ;;
+    -l | --length)
+        OPTARG=$2
+        re='^[0-9]+$'
+        if [[ $OPTARG =~ $re ]]; then
+            echo " -l|--length flag was triggered, Alignment block length $OPTARG." >&1
+            align_length=$OPTARG
+        else
+            echo ":( Wrong syntax for input size threshold. Using the default value ${input_size}." >&2
+        fi
         shift
         ;;
     -f | --filter)
@@ -234,6 +247,11 @@ if [ -z "$map_arg" ]; then
         ava_arg="-x ava-ont"
     fi
 fi
+suffix=$(echo $orig_reads | awk -F'.' '{print $NF}')
+if [ "$suffix" != 'fa' ] && [ "$suffix" != 'fasta' ]; then
+    echo "The input file must be in fasta format. Fastq and compressed files are not supported."
+    exit 1
+fi 
 echo $(date +"%Y-%m-%d %H:%M:%S")
 
 ##########1.alignment#############
@@ -255,6 +273,7 @@ if [ ! -f "step1.1_done.tag" ]; then
     fi
     echo "map to chr complete" >step1.1_done.tag
 fi
+echo "reads map chromosomes complete"
 echo $(date +"%Y-%m-%d %H:%M:%S")
 
 #######step1.2##########
@@ -263,7 +282,7 @@ echo "get reads overlap"
 if [ ! -f "step1.2_done.tag" ]; then
     if [ "$zip" == "yes" ]; then
         echo "${minimap2} ${ava_arg} -t ${threads} ${orig_reads} ${orig_reads}  2>ovlp.log |gzip -1 > ${prefix}.ovlp.paf.gz"
-        ${minimap2} ${ava_arg} -t ${threads} ${orig_reads} ${orig_reads} 2>ovlp.log | gzip -1 > ${prefix}.ovlp.paf.gz
+        ${minimap2} ${ava_arg} -t ${threads} ${orig_reads} ${orig_reads} 2>ovlp.log | gzip -1 >${prefix}.ovlp.paf.gz
     else
         echo "${minimap2} ${ava_arg} -t ${threads} ${orig_reads} ${orig_reads} >${prefix}.ovlp.paf 2>ovlp.log"
         ${minimap2} ${ava_arg} -t ${threads} ${orig_reads} ${orig_reads} >${prefix}.ovlp.paf 2>ovlp.log
@@ -272,10 +291,10 @@ if [ ! -f "step1.2_done.tag" ]; then
     if [ $? -ne 0 ]; then
         echo "overlap process error"
         exit 1
-    else
-        echo "get reads overlap complete" >step1.2_done.tag
     fi
+    echo "get reads overlap complete" >step1.2_done.tag
 fi
+echo "get reads overlap complete" 
 echo $(date +"%Y-%m-%d %H:%M:%S")
 
 ##########2.filter############
@@ -298,23 +317,29 @@ if [ ! -f "step2.1_done.tag" ]; then
     if [ $? -ne 0 ]; then
         echo "step2.1 process error"
         exit 1
-    else
-        echo "step2.1 complete" >step2.1_done.tag
     fi
+    echo "step2.1 complete" >step2.1_done.tag
 fi
-echo $(date +"%Y-%m-%d %H:%M:%S")
+echo "step2.1 complete"
 
 #######step2.2#########
 if [ ! -f "step2.2_done.tag" ]; then
     python $(dirname "$(readlink -f "$0")")/mask.py ${orig_fasta} ${mask_length}
-    suffix=$(echo $orig_reads | awk -F'.' '{print $NF}')
     if [ "$mask_length" -ne 0 ]; then
         ${minimap2} ${map_arg} -t ${threads} ${orig_fasta}_masked ${orig_reads} >${prefix}_useless_map.paf 2>useless_map.log
         awk -v mapq=$MapQ -v al=$aligned_length '{if ($12>mapq && $10>al) print $1}' ${prefix}_useless_map.paf | sort | uniq >filtered_reads.txt
-        seqkit grep -v -f filtered_reads.txt $orig_reads >${prefix}_useful.reads.${suffix}
+        seqkit grep -v -w 0 -f filtered_reads.txt $orig_reads >${prefix}_useful.reads.${suffix}
         # ${minimap2} ${ava_arg} -t ${threads} ${prefix}_useful.hifi.${suffix} ${prefix}_useful.hifi.${suffix} >${prefix}.ovlp.paf 2>ovlp.log
         # awk '{print $1}' ${prefix}_no_use_map.paf |sort |uniq >remove_reads.txt
         if [ "$zip" == "yes" ]; then
+            if [[ ! -f "${prefix}.ovlp.paf.gz" ]]; then
+                echo "Error: ${prefix}.ovlp.paf.gz does not exist."
+                exit 1
+            fi
+            if [[ ! -f "filtered_reads.txt" ]]; then
+                echo "Error: filtered_reads.txt does not exist."
+                exit 1
+            fi
             zcat ${prefix}.ovlp.paf.gz | grep -vFf filtered_reads.txt | cut -f1-12 >${prefix}.ovlp.sim.paf
         else
             grep -vFf filtered_reads.txt ${prefix}.ovlp.paf | cut -f1-12 >${prefix}.ovlp.sim.paf
@@ -329,33 +354,39 @@ if [ ! -f "step2.2_done.tag" ]; then
     if [ $? -ne 0 ]; then
         echo "step2.2 process error"
         exit 1
-    else
-        echo "step2.2 complete" >step2.2_done.tag
     fi
+    echo "step2.2 complete" >step2.2_done.tag
+
 fi
-echo $(date +"%Y-%m-%d %H:%M:%S")
+echo "step2.2 complete"
 
 #######step2.3##########
 if [ ! -f "step2.3_done.tag" ]; then
+    awk -v len=$align_length '!($1==$5 && $11<len)' ${prefix}.ovlp.sim.paf >${prefix}.ovlp.filter.paf
+    if [ $? -ne 0 ]; then
+        echo "step2.3 process error"
+        exit 1
+    fi 
+    mv ${prefix}.ovlp.filter.paf ${prefix}.ovlp.sim.paf
+    echo "step2.3 complete" >step2.3_done.tag
+fi
+echo "step2.3 complete"
 
-    if [ "$filter" == "yes" ]; then
+#######step2.4##########
+if [ "$filter" == "yes" ]; then
+    if [ ! -f "step2.4_done.tag" ]; then
         python $(dirname "$(readlink -f "$0")")/dynamic_programming.py ${prefix}.ovlp.sim.paf ${prefix}.ovlp.filter.paf
-        mv ${prefix}.ovlp.filter.paf ${prefix}.ovlp.sim.paf
         if [ $? -ne 0 ]; then
             echo "filter overlap process error"
             exit 1
         fi
-    else
-        awk '!($1 == $5)' ${prefix}.ovlp.sim.paf >${prefix}.ovlp.filter.paf
         mv ${prefix}.ovlp.filter.paf ${prefix}.ovlp.sim.paf
+        echo "step2.4 complete" >step2.4_done.tag
     fi
-    if [ $? -ne 0 ]; then
-        echo "step2.3 process error"
-        exit 1
-    else
-        echo "step2.3 complete" >step2.3_done.tag
-    fi
+    echo "step2.4 complete"
 fi
+
+echo "step2 complete"
 echo $(date +"%Y-%m-%d %H:%M:%S")
 
 ###########3.rafliter################
@@ -380,11 +411,12 @@ if [ ! -f "step3.1_done.tag" ]; then
         echo "step3.1 complete" >step3.1_done.tag
     fi
 fi
-echo $(date +"%Y-%m-%d %H:%M:%S")
+echo "step3.1 complete"
 
 #######step3.2##########
 if [ ! -f "step3.2.1_done.tag" ]; then
-    ${rafilter} build -o ./ -r ${orig_fasta} -q ${orig_reads} ${prefix}.kmers.dump
+    echo "${rafilter} build -o ./ -r ${orig_fasta} -q ${prefix}_useful.reads.${suffix} ${prefix}.kmers.dump"
+    ${rafilter} build -o ./ -r ${orig_fasta} -q ${prefix}_useful.reads.${suffix} ${prefix}.kmers.dump
     if [ $? -ne 0 ]; then
         echo "rafilter build process error"
         exit 1
@@ -408,16 +440,21 @@ if [ ! -f "step3.2.3_done.tag" ]; then
     if [ $? -ne 0 ]; then
         echo "rafilter filter overlap process error"
         exit 1
-    else
-        echo "step3.2.3 complete" >step3.2.3_done.tag
     fi
+    echo "step3.2.3 complete" >step3.2.3_done.tag
 fi
-sort -k6,6 ref_result/rafiltered.paf >${prefix}.map.final.paf
-sort -k6,6 qry_result/rafiltered.paf >${prefix}.ovlp.final.paf
+
+if [ ! -f "step3.2_done.tag" ]; then
+    sort -k6,6 ref_result/rafiltered.paf >${prefix}.map.final.paf
+    sort -k6,6 qry_result/rafiltered.paf >${prefix}.ovlp.final.paf
+fi
 if [ $? -ne 0 ]; then
     echo "step3.2 process error"
     exit 1
 fi
+echo "step3.2 complete" >step3.2_done.tag
+echo "step3.2 complete"
+echo "step3 complete"
 echo $(date +"%Y-%m-%d %H:%M:%S")
 
 ###########4.recommand################
@@ -426,9 +463,8 @@ if [ ! -f "step4.1_done.tag" ]; then
     if [ $? -ne 0 ]; then
         echo "step4.1 process error"
         exit 1
-    else
-        echo "step4.1 complete" >step4.1_done.tag
     fi
+    echo "step4.1 complete" >step4.1_done.tag
 fi
 
 if [ ! -f "step4.2_done.tag" ]; then
@@ -436,10 +472,10 @@ if [ ! -f "step4.2_done.tag" ]; then
     if [ $? -ne 0 ]; then
         echo "step4.2 process error"
         exit 1
-    else
-        echo "step4.2 complete" >step4.2_done.tag
     fi
+    echo "step4.2 complete" >step4.2_done.tag
 fi
+echo "step4 complete"
 echo $(date +"%Y-%m-%d %H:%M:%S")
 
 ###########5.build index#############
@@ -469,10 +505,10 @@ if [ ! -f "step5_done.tag" ]; then
     echo "step5 complete" >step5_done.tag
 
 fi
+echo "step5 complete"
 echo $(date +"%Y-%m-%d %H:%M:%S")
 
 ##########6.make workdir##############
-suffix=$(echo $orig_reads | awk -F'.' '{print $NF}')
 chr_fa=$(realpath ${orig_fasta})
 mkdir -p ${prefix}_workdir && cd ${prefix}_workdir
 ln -sf ${chr_fa} ./${prefix}.chr.fa
@@ -483,13 +519,14 @@ ln -sf ../*.score.txt* .
 if [ "$mask_length" -ne 0 ]; then
     ln -sf ../${prefix}_useful.reads.${suffix} .
 else
-    ln -sf ../${orig_fasta} ./${prefix}.reads.${suffix}
+    ln -sf $(realpath ${orig_reads}) ./${prefix}.reads.${suffix}
 fi
 cd ..
+echo "step6 complete"
 echo $(date +"%Y-%m-%d %H:%M:%S")
 
 ###########7.clean tmp################
-rm -rf ref_result qry_result ${prefix}.map.paf ${prefix}.map.sim.paf ${prefix}.ovlp.paf ${prefix}.ovlp.sim.paf ${prefix}.kmers.count ${prefix}.kmers.dump ref.pos query.pos
+#rm -rf ref_result qry_result  ${prefix}.map.sim.paf ${prefix}.ovlp.sim.paf ${prefix}.kmers.count ${prefix}.kmers.dump ref.pos query.pos
 
-echo "Done"
+echo "All steps complete. Done!"
 echo $(date +"%Y-%m-%d %H:%M:%S")
