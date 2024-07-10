@@ -362,7 +362,7 @@ echo "step2.2 complete"
 
 #######step2.3##########
 if [ ! -f "step2.3_done.tag" ]; then
-    awk -v len=$align_length '!($1==$5 && $11<len)' ${prefix}.ovlp.sim.paf >${prefix}.ovlp.filter.paf
+    awk -v len=$align_length '!($1==$6 && $11<len)' ${prefix}.ovlp.sim.paf >${prefix}.ovlp.filter.paf
     if [ $? -ne 0 ]; then
         echo "step2.3 process error"
         exit 1
