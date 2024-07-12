@@ -53,9 +53,9 @@ Run pipeline.sh with full paths or add pipeline.sh to environment PATH
     -r|--reads_type     The reads type. (default:hifi)
     -m|--mask           The length of the proximity gap you want to mask (default:500000).
     -c|--contig         Specify path to assembly fasta file.
-    -re|--reliable      The alignment you think are reliable ,format:'MapQ aligned_length'.default:'10 500'
-    -f|--filter         Do you want to filter the alignment? default:no
-    -z|--zip            Do you want to compressed the alignment file with gzip ? default:no
+    -re|--reliable      The alignment you think are reliable ,format:'MapQ aligned_length'.(default:'10 500')
+    -f|--filter         Do you want to filter the alignment? (default:no)
+    -z|--zip            Do you want to compressed the alignment file with gzip ? (default:no)
     -t|--threads        Number of threads(default:4)
     --aligner           minimap2/winnowmap(default:minimap2)
     --map_arg           map args ex:'-x map-hifi';
