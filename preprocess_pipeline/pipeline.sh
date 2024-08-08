@@ -5,7 +5,7 @@ echo $(readlink -f $0)" "$*
 echo "version: "${version}
 USAGE_short="
 *****************************************************
-version 20240712
+version 240720
 
 USAGE: ./pipeline.sh [options]  <path_to_input_chromosomes> <path_to_input_reads>
 

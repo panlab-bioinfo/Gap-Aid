@@ -6,14 +6,14 @@
 
 
 1. Linux:
-```bash  
-     git clone https://github.com/panlab-bioinfo/Gap-Aid.git
-     cd Gap-Aid
-     tar -zxvf Gap-Aidv1.1.tar.gz
-     cd Gap-Aidv1.1
-     chmod+x Gap-Aidv1.1
-```  
-2.Windows:
+Download Gap-Aidv1.1 from [Releases](https://github.com/panlab-bioinfo/Gap-Aid/releases) 
+```
+    tar -zxvf Gap-Aidv1.1.tar.gz
+    cd Gap-Aidv1.1
+    chmod +x Gap-Aidv1.1 
+    ./Gap-Aidv1.1
+```
+2. Windows:
 Download Gap-Aidv1.1.exe then execute
 
 ### Preprocessing
@@ -38,7 +38,7 @@ chmod + x pipeline.sh
 Run pipeline.sh with full paths or add pipeline.sh to environment PATH
 
 ```bash  
-    version 240510
+    version 240720
 
     USAGE: ./pipeline.sh [options]  <path_to_input_chromosomes> <path_to_input_reads>
 
