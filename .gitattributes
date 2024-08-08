@@ -1,3 +1,0 @@
-Gap-Aidv1.0.exe filter=lfs diff=lfs merge=lfs -text
-Gap-Aidv1.0 filter=lfs diff=lfs merge=lfs -text
-Gap-Aidv1.1 filter=lfs diff=lfs merge=lfs -text

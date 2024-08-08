@@ -9,10 +9,12 @@
 ```bash  
      git clone https://github.com/panlab-bioinfo/Gap-Aid.git
      cd Gap-Aid
-     chmod+x Gap-Aidv1.0
+     tar -zxvf Gap-Aidv1.1.tar.gz
+     cd Gap-Aidv1.1
+     chmod+x Gap-Aidv1.1
 ```  
 2.Windows:
-Download Gap-Aidv1.0.exe then execute
+Download Gap-Aidv1.1.exe then execute
 
 ### Preprocessing
 
@@ -106,11 +108,11 @@ There are 12 files.
 
 ## Using Gap-Aid
 
-*Gap-Aidv1.0* is a binary program under Linux.(Required a GUI or a remote GUI such as X11.)
+*Gap-Aidv1.1* is a binary program under Linux.(Required a GUI or a remote GUI such as X11.)
 
-Run *Gap-Aidv1.0* Under the Gap-Aid folder
+Run *Gap-Aidv1.1* Under the Gap-Aidv1.1 folder
 
-Gap-Aidv1.0 compiled by gcc9.4.0,too low gcc version may cause problems.
+Gap-Aidv1.1 compiled by gcc9.4.0,too low gcc version may cause problems.
 
 
-*Gap-Aidv1.0.exe* is a binary program under windows.
+*Gap-Aidv1.1.exe* is a binary program under windows.
