@@ -14,7 +14,7 @@ Download Gap-Aidv1.1 from [Releases](https://github.com/panlab-bioinfo/Gap-Aid/r
     ./Gap-Aidv1.1
 ```
 2. Windows:
-Download Gap-Aidv1.1.exe then execute
+Download Gap-Aidv1.1.exe from [Releases](https://github.com/panlab-bioinfo/Gap-Aid/releases) then execute
 
 ### Preprocessing
 
