@@ -1,11 +1,11 @@
 #!/bin/bash
 ###mapped genomes and reads overlap pipeline
-version=240510
+version=240720
 echo $(readlink -f $0)" "$*
 echo "version: "${version}
 USAGE_short="
 *****************************************************
-version 231122
+version 20240712
 
 USAGE: ./pipeline.sh [options]  <path_to_input_chromosomes> <path_to_input_reads>
 
@@ -22,10 +22,10 @@ OPTIONS:
 -r|--reads_type     The reads type. (default:hifi)
 -m|--mask           The length of the proximity gap you want to mask (default:500000).
 -c|--contig         Specify path to assembly fasta file.
--re|--reliable      The alignment you think are reliable ,format:'MapQ aligned_length'.(default:'10 500')
+-re|--reliable      The alignment you think are reliable ,format:'MapQ aligned_ratio'.(default:'10 0.6')
 -l|--length         The Alignment block length you think are unreliable.(default:500)
--f|--filter         Do you want to filter the alignment? (default:no)
--z|--zip            Do you want to compressed the alignment file with gzip ? (default:no)
+-f|--filter         Do you want to filter the alignment? yes/no (default:no)
+-z|--zip            Do you want to compressed the alignment file with gzip ? yes/no (default:no)
 -t|--threads        Number of threads(default:4)
 --aligner           minimap2/winnowmap(default:minimap2) 
 --map_arg           map args ex:'-x map-hifi';
@@ -43,7 +43,7 @@ prefix="gap-aid"
 reads_type="hifi"
 mask_length=500000
 MapQ=10
-aligned_length=500
+aligned_ratio=0.6
 align_length=500
 filter="no"
 zip="no"
@@ -73,7 +73,7 @@ while :; do
             echo " -m|--mask flag was triggered, masking shore $OPTARG." >&1
             mask_length=$OPTARG
         else
-            echo ":( Wrong syntax for input size threshold. Using the default value ${input_size}." >&2
+            echo ":( Wrong syntax for input size threshold. Using the default value ${mask_length}." >&2
         fi
         shift
         ;;
@@ -86,7 +86,7 @@ while :; do
         OPTARG=$2
         reliable=$OPTARG
         MapQ=$(echo $reliable | awk -F' ' '{print $1}')
-        aligned_length=$(echo $reliable | awk -F' ' '{print $2}')
+        aligned_ratio=$(echo $reliable | awk -F' ' '{print $2}')
         shift
         ;;
     -l | --length)
@@ -96,7 +96,7 @@ while :; do
             echo " -l|--length flag was triggered, Alignment block length $OPTARG." >&1
             align_length=$OPTARG
         else
-            echo ":( Wrong syntax for input size threshold. Using the default value ${input_size}." >&2
+            echo ":( Wrong syntax for input size threshold. Using the default value ${align_length}." >&2
         fi
         shift
         ;;
@@ -134,6 +134,11 @@ while :; do
     --winnowmap)
         OPTARG=$2
         winnowmap=$OPTARG
+        shift
+        ;;
+    --seqkit)
+        OPTARG=$2
+        seqkit=$OPTARG
         shift
         ;;
     --jellyfish)
@@ -235,17 +240,20 @@ else
     echo "rafilter path : "$rafilter
 fi
 
-if [ -z "$map_arg" ]; then
-    if [ "$reads_type" == "hifi" ]; then
-        echo "reads type:hifi"
-        map_arg="-x map-hifi"
-        ava_arg="-x ava-pb"
-    else
 
-        echo "reads type:ONT"
-        map_arg="-x map-ont"
-        ava_arg="-x ava-ont"
+if [ "$reads_type" == "hifi" ]; then
+    echo "reads type:hifi"
+    if [ -z "$map_arg" ]; then
+    map_arg="-x map-hifi"
     fi
+    ava_arg="-x ava-pb"
+elif [ "$reads_type" == "ont" ]; then
+
+    echo "reads type:ONT"
+    if [ -z "$map_arg" ]; then
+    map_arg="-x map-ont"
+    fi
+    ava_arg="-x ava-ont"
 fi
 suffix=$(echo $orig_reads | awk -F'.' '{print $NF}')
 if [ "$suffix" != 'fa' ] && [ "$suffix" != 'fasta' ]; then
@@ -327,7 +335,7 @@ if [ ! -f "step2.2_done.tag" ]; then
     python $(dirname "$(readlink -f "$0")")/mask.py ${orig_fasta} ${mask_length}
     if [ "$mask_length" -ne 0 ]; then
         ${minimap2} ${map_arg} -t ${threads} ${orig_fasta}_masked ${orig_reads} >${prefix}_useless_map.paf 2>useless_map.log
-        awk -v mapq=$MapQ -v al=$aligned_length '{if ($12>mapq && $10>al) print $1}' ${prefix}_useless_map.paf | sort | uniq >filtered_reads.txt
+        awk -v mapq=$MapQ -v ar=$aligned_ratio '{if ($12 > mapq && $11 / $2 > ar) print $1}' ${prefix}_useless_map.paf | sort | uniq >filtered_reads.txt
         seqkit grep -v -w 0 -f filtered_reads.txt $orig_reads >${prefix}_useful.reads.${suffix}
         # ${minimap2} ${ava_arg} -t ${threads} ${prefix}_useful.hifi.${suffix} ${prefix}_useful.hifi.${suffix} >${prefix}.ovlp.paf 2>ovlp.log
         # awk '{print $1}' ${prefix}_no_use_map.paf |sort |uniq >remove_reads.txt
@@ -359,10 +367,9 @@ if [ ! -f "step2.2_done.tag" ]; then
 
 fi
 echo "step2.2 complete"
-
 #######step2.3##########
 if [ ! -f "step2.3_done.tag" ]; then
-    awk -v len=$align_length '!($1==$6 && $11<len)' ${prefix}.ovlp.sim.paf >${prefix}.ovlp.filter.paf
+    awk -v len=$align_length '($1 != $6 && $11 > len)' ${prefix}.ovlp.sim.paf > ${prefix}.ovlp.filter.paf
     if [ $? -ne 0 ]; then
         echo "step2.3 process error"
         exit 1
