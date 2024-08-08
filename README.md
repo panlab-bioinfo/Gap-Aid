@@ -106,7 +106,7 @@ There are 12 files.
 
 ## Using Gap-Aid
 
-*Gap-Aidv1.0* is a binary program under Linux.
+*Gap-Aidv1.0* is a binary program under Linux.(Required a GUI or a remote GUI such as X11.)
 
 Run *Gap-Aidv1.0* Under the Gap-Aid folder
 
