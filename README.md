@@ -110,6 +110,14 @@ There are 12 files.
 
 ## Using Gap-Aid
 
+*example.tar.gz* is an example for Gap-Aid, it applies to visualization programs, not to preprocessing programs.
+
+usage:
+```
+tar -zxvf example.tar.gz
+#Select the example directory in the Gap-Aid
+```
+
 *Gap-Aidv1.1* is a binary program under Linux.(Required a GUI or a remote GUI such as X11.)
 
 Run *Gap-Aidv1.1* Under the Gap-Aidv1.1 folder
