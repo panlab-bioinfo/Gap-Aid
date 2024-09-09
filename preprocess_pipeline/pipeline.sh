@@ -424,14 +424,19 @@ echo "step3.1 complete"
 
 #######step3.2##########
 if [ ! -f "step3.2.1_done.tag" ]; then
-    echo "${rafilter} build -o ./ -r ${orig_fasta} -q ${prefix}_useful.reads.fa ${prefix}.kmers.dump"
-    ${rafilter} build -o ./ -r ${orig_fasta} -q ${prefix}_useful.reads.${suffix} ${prefix}.kmers.dump
+    if [ "$mask_length" -ne 0 ]; then
+        echo "${rafilter} build -o ./ -r ${orig_fasta} -q ${prefix}_useful.reads.fa ${prefix}.kmers.dump"
+        ${rafilter} build -o ./ -r ${orig_fasta} -q ${prefix}_useful.reads.fa ${prefix}.kmers.dump
+    else
+        echo "${rafilter} build -o ./ -r ${orig_fasta} -q ${orig_reads} ${prefix}.kmers.dump"
+        ${rafilter} build -o ./ -r ${orig_fasta} -q ${orig_reads} ${prefix}.kmers.dump
+    fi
     if [ $? -ne 0 ]; then
         echo "rafilter build process error"
         exit 1
-    else
-        echo "step3.2.1 complete" >step3.2.1_done.tag
     fi
+    echo "step3.2.1 complete" >step3.2.1_done.tag
+    
 fi
 
 if [ ! -f "step3.2.2_done.tag" ]; then
