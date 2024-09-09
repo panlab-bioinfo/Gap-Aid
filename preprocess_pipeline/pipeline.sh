@@ -336,9 +336,11 @@ if [ ! -f "step2.2_done.tag" ]; then
     if [ "$mask_length" -ne 0 ]; then
         ${minimap2} ${map_arg} -t ${threads} ${orig_fasta}_masked ${orig_reads} >${prefix}_useless_map.paf 2>useless_map.log
         awk -v mapq=$MapQ -v ar=$aligned_ratio '{if ($12 > mapq && $11 / $2 > ar) print $1}' ${prefix}_useless_map.paf | sort | uniq >filtered_reads.txt
-        seqkit grep -v -w 0 -f filtered_reads.txt $orig_reads >${prefix}_useful.reads.${suffix}
+        seqkit grep -v -w 0 -f filtered_reads.txt $orig_reads >${prefix}_useful.reads.fa
         # ${minimap2} ${ava_arg} -t ${threads} ${prefix}_useful.hifi.${suffix} ${prefix}_useful.hifi.${suffix} >${prefix}.ovlp.paf 2>ovlp.log
         # awk '{print $1}' ${prefix}_no_use_map.paf |sort |uniq >remove_reads.txt
+        grep -vFf filtered_reads.txt ${prefix}.map.sim.paf | cut -f1-12 > ${prefix}.map.filter.paf
+        mv ${prefix}.map.filter.paf ${prefix}.map.sim.paf
         if [ "$zip" == "yes" ]; then
             if [[ ! -f "${prefix}.ovlp.paf.gz" ]]; then
                 echo "Error: ${prefix}.ovlp.paf.gz does not exist."
@@ -422,7 +424,7 @@ echo "step3.1 complete"
 
 #######step3.2##########
 if [ ! -f "step3.2.1_done.tag" ]; then
-    echo "${rafilter} build -o ./ -r ${orig_fasta} -q ${prefix}_useful.reads.${suffix} ${prefix}.kmers.dump"
+    echo "${rafilter} build -o ./ -r ${orig_fasta} -q ${prefix}_useful.reads.fa ${prefix}.kmers.dump"
     ${rafilter} build -o ./ -r ${orig_fasta} -q ${prefix}_useful.reads.${suffix} ${prefix}.kmers.dump
     if [ $? -ne 0 ]; then
         echo "rafilter build process error"
@@ -524,7 +526,7 @@ ln -sf ../max_reads.txt .
 ln -sf ../*.final.paf* .
 ln -sf ../*.score.txt* .
 if [ "$mask_length" -ne 0 ]; then
-    ln -sf ../${prefix}_useful.reads.${suffix} .
+    ln -sf ../${prefix}_useful.reads.fa .
 else
     ln -sf $(realpath ${orig_reads}) ./${prefix}.reads.${suffix}
 fi
