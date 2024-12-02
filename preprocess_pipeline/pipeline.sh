@@ -1,11 +1,11 @@
 #!/bin/bash
 ###mapped genomes and reads overlap pipeline
-version=240720
+version=240909
 echo $(readlink -f $0)" "$*
 echo "version: "${version}
 USAGE_short="
 *****************************************************
-version 240720
+version ${version}
 
 USAGE: ./pipeline.sh [options]  <path_to_input_chromosomes> <path_to_input_reads>
 
@@ -30,8 +30,7 @@ OPTIONS:
 --aligner           minimap2/winnowmap(default:minimap2) 
 --map_arg           map args ex:'-x map-hifi';
                     arg must be wraped by ' '
---minimap2          Installed minimap2 path
---winnowmap         Installed winnowmap path         
+--minimap2          Installed minimap2 path       
 --seqkit            Installed seqkit path
 --jellyfish         Installed jellyfish path
 --rafilter          Installed rafilter path
@@ -131,11 +130,6 @@ while :; do
         minimap2=$OPTARG
         shift
         ;;
-    --winnowmap)
-        OPTARG=$2
-        winnowmap=$OPTARG
-        shift
-        ;;
     --seqkit)
         OPTARG=$2
         seqkit=$OPTARG
@@ -163,19 +157,8 @@ while :; do
     esac
     shift
 done
-[ -z $1 ] || [ -z $2 ] && echo >&2 "Not sure how to parse your input: files not listed or not found at expected locations. Exiting!" && echo >&2 "$USAGE_short" && exit 1
 
-[ ! -s $1 ] || [ ! -s $2 ] && echo >&2 "Not sure how to parse your input: files not listed or not found at expected locations. Exiting!" && echo >&2 "$USAGE_short" && exit 1
-
-## TODO: check file format
-
-if [ "$#" -ne 2 ]; then
-    echo >&2 "Illegal number of arguments. Please double check your input. Exiting!" && echo >&2 "$USAGE_short" && exit 1
-fi
-
-orig_fasta=$1
-orig_reads=$2
-
+#########check necessarily software########
 if [ "$aligner" == "minimap2" ]; then
     echo "using minimap2 for alignment"
     if [ -z "$minimap2" ]; then
@@ -191,16 +174,14 @@ if [ "$aligner" == "minimap2" ]; then
     fi
 else
     echo "using winnowmap for alignment"
-    if [ -z "$winnowmap" ]; then
-        winnowmap=$(command -v winnowmap)
-        if [ -n "$winnowmap" ]; then
-            echo "winnowmap path : "$winnowmap
-        else
-            echo "missing winnowmap,you need install winnowmap"
-            exit 1
-        fi
-    else
+    meryl=$(command -v meryl)
+    winnowmap=$(command -v winnowmap)
+    if [ -n "$winnowmap" ] && [ -n "$meryl" ]; then
+        echo "meryl path : "$meryl
         echo "winnowmap path : "$winnowmap
+    else
+        echo "missing meryl or winnowmap, you need to install them and add them to PATH"
+        exit 1
     fi
 fi
 
@@ -240,39 +221,57 @@ else
     echo "rafilter path : "$rafilter
 fi
 
-
 if [ "$reads_type" == "hifi" ]; then
     echo "reads type:hifi"
     if [ -z "$map_arg" ]; then
-    map_arg="-x map-hifi"
+        if [ "$aligner" == "minimap2" ]; then
+            map_arg="-x map-hifi"
+        else
+            map_arg="-x map-pb"
+        fi
     fi
     ava_arg="-x ava-pb"
 elif [ "$reads_type" == "ont" ]; then
 
     echo "reads type:ONT"
     if [ -z "$map_arg" ]; then
-    map_arg="-x map-ont"
+        map_arg="-x map-ont"
     fi
     ava_arg="-x ava-ont"
 fi
+
+
+#########check input########
+[ -z $1 ] || [ -z $2 ] && echo >&2 "Not sure how to parse your input: files not listed or not found at expected locations. Exiting!" && echo >&2 "$USAGE_short" && exit 1
+
+[ ! -s $1 ] || [ ! -s $2 ] && echo >&2 "Not sure how to parse your input: files not listed or not found at expected locations. Exiting!" && echo >&2 "$USAGE_short" && exit 1
+
+if [ "$#" -ne 2 ]; then
+    echo >&2 "Illegal number of arguments. Please double check your input. Exiting!" && echo >&2 "$USAGE_short" && exit 1
+fi
+
+## TODO: check file format
+orig_fasta=$1
+orig_reads=$2
 suffix=$(echo $orig_reads | awk -F'.' '{print $NF}')
 if [ "$suffix" != 'fa' ] && [ "$suffix" != 'fasta' ]; then
     echo "The input file must be in fasta format. Fastq and compressed files are not supported."
     exit 1
-fi 
+fi
 echo $(date +"%Y-%m-%d %H:%M:%S")
 
 ##########1.alignment#############
-
 ######step1.1##########
 #ref
 echo "map to chromosomes "
 if [ ! -f "step1.1_done.tag" ]; then
-    echo "${minimap2} ${map_arg} -t ${threads} ${orig_fasta} ${orig_reads} > ${prefix}.map.paf 2>map.log"
-    ${minimap2} ${map_arg} -t ${threads} ${orig_fasta} ${orig_reads} >${prefix}.map.paf 2>map.log
-    if [ $? -ne 0 ]; then
-        echo "map process error"
-        exit 1
+    if [ "$aligner" == "minimap2" ]; then
+        echo "${minimap2} ${map_arg} -t ${threads} ${orig_fasta} ${orig_reads} > ${prefix}.map.paf 2>map.log"
+        ${minimap2} ${map_arg} -t ${threads} ${orig_fasta} ${orig_reads} >${prefix}.map.paf 2>map.log        
+    else
+        meryl count k=15 output merylDB ${orig_fasta}
+        meryl print greater-than distinct=0.9998 merylDB > repetitive_k15.txt
+        ${winnowmap} -W repetitive_k15.txt ${map_arg} -t ${threads} ${orig_fasta} ${orig_reads} > ${prefix}.map.paf
     fi
     awk '{print $2}' ${prefix}.map.paf | sort -nr | head -n 1 >max_reads.txt
     if [ $? -ne 0 ]; then
@@ -287,13 +286,14 @@ echo $(date +"%Y-%m-%d %H:%M:%S")
 #######step1.2##########
 #query
 echo "get reads overlap"
+#minimap2 -K8g -x ava-ont -k25 -w17 -e200 -r150 -m4000 -z200 --dual=yes
 if [ ! -f "step1.2_done.tag" ]; then
     if [ "$zip" == "yes" ]; then
-        echo "${minimap2} ${ava_arg} -t ${threads} ${orig_reads} ${orig_reads}  2>ovlp.log |gzip -1 > ${prefix}.ovlp.paf.gz"
-        ${minimap2} ${ava_arg} -t ${threads} ${orig_reads} ${orig_reads} 2>ovlp.log | gzip -1 >${prefix}.ovlp.paf.gz
+        echo "${minimap2} -K8g -k25 -w17 -e200 -r150 -m4000 -z200 --dual=yes ${ava_arg} -t ${threads} ${orig_reads} ${orig_reads}  2>ovlp.log |gzip -1 > ${prefix}.ovlp.paf.gz"
+        ${minimap2} -K8g -k25 -w17 -e200 -r150 -m4000 -z200 --dual=yes ${ava_arg} -t ${threads} ${orig_reads} ${orig_reads} 2>ovlp.log | gzip -1 >${prefix}.ovlp.paf.gz
     else
-        echo "${minimap2} ${ava_arg} -t ${threads} ${orig_reads} ${orig_reads} >${prefix}.ovlp.paf 2>ovlp.log"
-        ${minimap2} ${ava_arg} -t ${threads} ${orig_reads} ${orig_reads} >${prefix}.ovlp.paf 2>ovlp.log
+        echo "${minimap2} -K8g -k25 -w17 -e200 -r150 -m4000 -z200 --dual=yes ${ava_arg} -t ${threads} ${orig_reads} ${orig_reads} >${prefix}.ovlp.paf 2>ovlp.log"
+        ${minimap2} -K8g -k25 -w17 -e200 -r150 -m4000 -z200 --dual=yes ${ava_arg} -t ${threads} ${orig_reads} ${orig_reads} >${prefix}.ovlp.paf 2>ovlp.log
     fi
 
     if [ $? -ne 0 ]; then
@@ -302,11 +302,10 @@ if [ ! -f "step1.2_done.tag" ]; then
     fi
     echo "get reads overlap complete" >step1.2_done.tag
 fi
-echo "get reads overlap complete" 
+echo "get reads overlap complete"
 echo $(date +"%Y-%m-%d %H:%M:%S")
 
 ##########2.filter############
-
 #######step2.1##########
 if [ ! -f "step2.1_done.tag" ]; then
     cut -f1-12 ${prefix}.map.paf >${prefix}.map.sim.paf
@@ -333,14 +332,14 @@ echo "step2.1 complete"
 #######step2.2#########
 if [ ! -f "step2.2_done.tag" ]; then
     python $(dirname "$(readlink -f "$0")")/mask.py ${orig_fasta} ${mask_length}
+
     if [ "$mask_length" -ne 0 ]; then
         ${minimap2} ${map_arg} -t ${threads} ${orig_fasta}_masked ${orig_reads} >${prefix}_useless_map.paf 2>useless_map.log
         awk -v mapq=$MapQ -v ar=$aligned_ratio '{if ($12 > mapq && $11 / $2 > ar) print $1}' ${prefix}_useless_map.paf | sort | uniq >filtered_reads.txt
-        seqkit grep -v -w 0 -f filtered_reads.txt $orig_reads >${prefix}_useful.reads.fa
-        # ${minimap2} ${ava_arg} -t ${threads} ${prefix}_useful.hifi.${suffix} ${prefix}_useful.hifi.${suffix} >${prefix}.ovlp.paf 2>ovlp.log
-        # awk '{print $1}' ${prefix}_no_use_map.paf |sort |uniq >remove_reads.txt
+        seqkit grep -v -w 0 -j ${threads} -f filtered_reads.txt $orig_reads >${prefix}_useful.reads.fa
         grep -vFf filtered_reads.txt ${prefix}.map.sim.paf | cut -f1-12 > ${prefix}.map.filter.paf
         mv ${prefix}.map.filter.paf ${prefix}.map.sim.paf
+
         if [ "$zip" == "yes" ]; then
             if [[ ! -f "${prefix}.ovlp.paf.gz" ]]; then
                 echo "Error: ${prefix}.ovlp.paf.gz does not exist."
@@ -350,10 +349,11 @@ if [ ! -f "step2.2_done.tag" ]; then
                 echo "Error: filtered_reads.txt does not exist."
                 exit 1
             fi
-            zcat ${prefix}.ovlp.paf.gz | grep -vFf filtered_reads.txt | cut -f1-12 >${prefix}.ovlp.sim.paf
+            zgrep -vFf filtered_reads.txt ${prefix}.ovlp.paf.gz | cut -f1-12 >${prefix}.ovlp.sim.paf
         else
             grep -vFf filtered_reads.txt ${prefix}.ovlp.paf | cut -f1-12 >${prefix}.ovlp.sim.paf
         fi
+
         if [ $? -ne 0 ]; then
             echo "reduce overlap alignments process error"
             exit 1
@@ -361,25 +361,28 @@ if [ ! -f "step2.2_done.tag" ]; then
     else
         cut -f1-12 ${prefix}.ovlp.paf >${prefix}.ovlp.sim.paf
     fi
+
     if [ $? -ne 0 ]; then
         echo "step2.2 process error"
         exit 1
     fi
+
     echo "step2.2 complete" >step2.2_done.tag
 
 fi
-echo "step2.2 complete"
+echo "step2.2 filter reads complete"
+
 #######step2.3##########
 if [ ! -f "step2.3_done.tag" ]; then
-    awk -v len=$align_length '($1 != $6 && $11 > len)' ${prefix}.ovlp.sim.paf > ${prefix}.ovlp.filter.paf
+    awk -v len=$align_length '($1 != $6 && $11 > len)' ${prefix}.ovlp.sim.paf >${prefix}.ovlp.filter.paf
     if [ $? -ne 0 ]; then
         echo "step2.3 process error"
         exit 1
-    fi 
+    fi
     mv ${prefix}.ovlp.filter.paf ${prefix}.ovlp.sim.paf
     echo "step2.3 complete" >step2.3_done.tag
 fi
-echo "step2.3 complete"
+echo "step2.3 filter alignments complete"
 
 #######step2.4##########
 if [ "$filter" == "yes" ]; then
@@ -392,14 +395,12 @@ if [ "$filter" == "yes" ]; then
         mv ${prefix}.ovlp.filter.paf ${prefix}.ovlp.sim.paf
         echo "step2.4 complete" >step2.4_done.tag
     fi
-    echo "step2.4 complete"
+    echo "step2.4 filter conflict alignments complete"
 fi
-
 echo "step2 complete"
 echo $(date +"%Y-%m-%d %H:%M:%S")
 
 ###########3.rafliter################
-
 #######step3.1##########
 if [ ! -f "step3.1_done.tag" ]; then
 
@@ -416,11 +417,10 @@ if [ ! -f "step3.1_done.tag" ]; then
     if [ $? -ne 0 ]; then
         echo "step3.1 process error"
         exit 1
-    else
-        echo "step3.1 complete" >step3.1_done.tag
     fi
+    echo "step3.1 complete" >step3.1_done.tag
 fi
-echo "step3.1 complete"
+echo "step3.1 jellyfish complete"
 
 #######step3.2##########
 if [ ! -f "step3.2.1_done.tag" ]; then
@@ -431,12 +431,7 @@ if [ ! -f "step3.2.1_done.tag" ]; then
         echo "${rafilter} build -o ./ -r ${orig_fasta} -q ${orig_reads} ${prefix}.kmers.dump"
         ${rafilter} build -o ./ -r ${orig_fasta} -q ${orig_reads} ${prefix}.kmers.dump
     fi
-    if [ $? -ne 0 ]; then
-        echo "rafilter build process error"
-        exit 1
-    fi
     echo "step3.2.1 complete" >step3.2.1_done.tag
-    
 fi
 
 if [ ! -f "step3.2.2_done.tag" ]; then
@@ -444,9 +439,9 @@ if [ ! -f "step3.2.2_done.tag" ]; then
     if [ $? -ne 0 ]; then
         echo "rafilter filter map process error"
         exit 1
-    else
-        echo "step3.2.2 complete" >step3.2.2_done.tag
     fi
+    echo "step3.2.2 complete" >step3.2.2_done.tag
+
 fi
 
 if [ ! -f "step3.2.3_done.tag" ]; then
@@ -467,7 +462,7 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 echo "step3.2 complete" >step3.2_done.tag
-echo "step3.2 complete"
+echo "step3.2 rafilter complete"
 echo "step3 complete"
 echo $(date +"%Y-%m-%d %H:%M:%S")
 
@@ -533,7 +528,7 @@ ln -sf ../*.score.txt* .
 if [ "$mask_length" -ne 0 ]; then
     ln -sf ../${prefix}_useful.reads.fa .
 else
-    ln -sf $(realpath ${orig_reads}) ./${prefix}.reads.${suffix}
+    ln -sf $(realpath ${orig_reads}) ./${prefix}.reads.fa
 fi
 cd ..
 echo "step6 complete"
@@ -542,5 +537,6 @@ echo $(date +"%Y-%m-%d %H:%M:%S")
 ###########7.clean tmp################
 #rm -rf ref_result qry_result  ${prefix}.map.sim.paf ${prefix}.ovlp.sim.paf ${prefix}.kmers.count ${prefix}.kmers.dump ref.pos query.pos
 
+############finished############
 echo "All steps complete. Done!"
 echo $(date +"%Y-%m-%d %H:%M:%S")
