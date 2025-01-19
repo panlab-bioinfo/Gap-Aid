@@ -1,0 +1,7 @@
+chr1	15000001	15000501	500
+chr5	0
+chr4	0
+chr3	0
+chr2	0
+chr1	1
+total_gap	1
