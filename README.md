@@ -114,7 +114,10 @@ There are 12 files.
 
 *.score.txt\* is the score we use to recommend the reads
 #### filter output file
+This will use stricter parameters to filter the alignment files, which may filter out reads in the gap regions. If the file is not particularly large, it is not recommended to use this scrtpt.
 ```
+cd Gap-Aid/preprocess/
+chmod + x filter.sh
 ./filter.sh [options]  <useless_map.paf>  <path_to_workdir>
 ```
 ```bash  
