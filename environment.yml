@@ -37,4 +37,3 @@ dependencies:
       - pyqt5-sip==12.16.1
       - pyqtgraph==0.13.7
       - xcffib==1.5.0
-prefix: /data/zhaoxianjia/software/miniconda3/envs/gapaid
