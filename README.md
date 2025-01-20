@@ -7,10 +7,13 @@ Gap-Aid provides an interactive visualization tool for displaying the alignments
 
 
 
-<!--1. Windows:
-Download Gap-Aid-v2.0.exe from [Releases](https://github.com/panlab-bioinfo/Gap-Aid/releases) then execute-->
 
-2.Mac 
+1.Windows
+
+<!--Download Gap-Aid-v2.0.exe from [Releases](https://github.com/panlab-bioinfo/Gap-Aid/releases) then execute-->
+
+2.Mac
+
 Download Gap-Aid-v2.0.pkg from [Releases](https://github.com/panlab-bioinfo/Gap-Aid/releases) then execute
 
 3.Linux
