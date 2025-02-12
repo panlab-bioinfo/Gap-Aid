@@ -17,14 +17,26 @@ Download Gap-Aid-v2.0.exe from [Releases](https://github.com/panlab-bioinfo/Gap-
 Download Gap-Aid-v2.0.pkg from [Releases](https://github.com/panlab-bioinfo/Gap-Aid/releases) then execute
 
 3.Linux
+Download Gap-Aid-v2.0.tar.gz from [Releases](https://github.com/panlab-bioinfo/Gap-Aid/releases)
 ```
-git clone https://github.com/panlab-bioinfo/Gap-Aid.git
+tar -zxvf Gap-Aid-v2.0.tar.gz
 cd Gap-Aid
-conda create -f environment.yml
-conda activate gapaid
-chmod +x Gap-Aid.py
-./Gap-Aid.py
+chmod +x Gap-Aid
+./Gap-Aid
 ```
+
+<details>
+<summary><b>Run from source</b></summary>
+
+    git clone https://github.com/panlab-bioinfo/Gap-Aid.git
+    cd Gap-Aid
+    conda create -f environment.yml
+    conda activate gapaid
+    chmod +x Gap-Aid.py
+    ./Gap-Aid.py
+
+</details>
+
 
 ## Preprocessing
 
