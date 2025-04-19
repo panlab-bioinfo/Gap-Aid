@@ -1,6 +1,6 @@
 #!/bin/bash
 ###mapped genomes and reads overlap pipeline
-version=240909
+version=250418
 echo $(readlink -f $0)" "$*
 echo "version: "${version}
 USAGE_short="
