@@ -3,9 +3,6 @@ import sys
 import random
 from collections import defaultdict
 
-aln="/data/zhaoxianjia/project/t2t/test/reads-chr.map.final.paf"
-olp="/data/zhaoxianjia/project/t2t/test/reads-reads.olp.final.paf"
-
 def str_to_int(s):
     try:
         return int(s)
