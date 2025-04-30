@@ -21,6 +21,8 @@ Download Gap-Aid-v2.0.tar.gz from [Releases](https://github.com/panlab-bioinfo/G
 ```
 tar -zxvf Gap-Aid-v2.0.tar.gz
 cd Gap-Aid
+conda env create -f environment.yml
+conda activate gapaid
 chmod +x Gap-Aid
 ./Gap-Aid
 ```
@@ -30,7 +32,7 @@ chmod +x Gap-Aid
 
     git clone https://github.com/panlab-bioinfo/Gap-Aid.git
     cd Gap-Aid
-    conda create -f environment.yml
+    conda env create -f environment.yml
     conda activate gapaid
     chmod +x Gap-Aid.py
     ./Gap-Aid.py
