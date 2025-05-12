@@ -57,11 +57,11 @@ def mask(fa,length):
                 if start is None:
                     start = i
             elif start is not None:
-                    fw.write(f"{name}\t{start}\t{i}\t{i-start}")
+                    fw.write(f"{name}\t{start}\t{i}\t{i-start}\n")
                     gap.append((start, i))
                     start = None
         if start is not None:
-            fw.write(f"{name}\t{start}\t{seq_len-1}\t{seq_len-1-start}")
+            fw.write(f"{name}\t{start}\t{seq_len-1}\t{seq_len-1-start}\n")
             gap.append((start, seq_len-1))
         if length>0:
             seqs=[]
