@@ -56,8 +56,9 @@ The preprocess program  can only be used on Linux systems
 
 ### Usage Details
 ```bash
-cd Gap-Aid/preprocess/pipeline.sh
-chmod + x pipeline.sh
+git clone https://github.com/panlab-bioinfo/Gap-Aid.git
+cd Gap-Aid/preprocess/
+chmod + x *.sh
 ```
 
 Run pipeline.sh with full paths or add pipeline.sh to environment PATH
@@ -147,7 +148,7 @@ chmod + x pipeline_hifiasm.sh
 *****************************************************
 version ${version}
 
-USAGE: ./pipeline.sh [options]  <path_to_input_chromosomes> <path_to_input_reads>
+USAGE: ./pipeline_hifiasm.sh [options]  <path_to_input_chromosomes> <path_to_input_reads>
 
 DESCRIPTION:
 This is a script that maps reads to draft assemblies and get the overlaps of reads.
