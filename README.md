@@ -19,7 +19,7 @@ The preprocess program  can only be used on Linux systems
 ### Usage Details
 ```bash
 git clone https://github.com/panlab-bioinfo/Gap-Aid.git
-cd Gap-Aid/preprocess/
+cd Gap-Aid/preprocess_pipeline
 chmod + x *.sh
 ```
 
@@ -103,7 +103,7 @@ If you haven't run hifiasm, the following script will run hifiasm first. Make su
 
 Then you can run the script in preprocesss.
 ```
-cd Gap-Aid/preprocess/
+cd Gap-Aid/preprocess_pipeline
 chmod + x pipeline_hifiasm.sh
 ```
 ```
