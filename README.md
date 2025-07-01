@@ -2,44 +2,6 @@
 
 Gap-Aid provides an interactive visualization tool for displaying the alignments between long reads and genomic regions of gaps. Upon user selection of alignment information, Gap-Aid automatically presents the next round of alignments, progressively constructing the assembly path to complete the gap-filling process. 
 
-
-## Installation
-
-
-
-
-1.Windows
-
-Download Gap-Aid-v2.0.exe from [Releases](https://github.com/panlab-bioinfo/Gap-Aid/releases) then execute
-
-2.Mac
-
-Download Gap-Aid-v2.0.pkg from [Releases](https://github.com/panlab-bioinfo/Gap-Aid/releases) then execute
-
-3.Linux
-Download Gap-Aid-v2.0.tar.gz from [Releases](https://github.com/panlab-bioinfo/Gap-Aid/releases)
-```
-tar -zxvf Gap-Aid-v2.0.tar.gz
-cd Gap-Aid
-conda env create -f environment.yml
-conda activate gapaid
-chmod +x Gap-Aid
-./Gap-Aid
-```
-
-<details>
-<summary><b>Run from source</b></summary>
-
-    git clone https://github.com/panlab-bioinfo/Gap-Aid.git
-    cd Gap-Aid
-    conda env create -f environment.yml
-    conda activate gapaid
-    chmod +x Gap-Aid.py
-    ./Gap-Aid.py
-
-</details>
-
-
 ## Preprocessing
 
 The preprocess program  can only be used on Linux systems
@@ -214,6 +176,37 @@ OPTIONS:
 
 ### Using Gap-Aid
 
+## Installation
+1.Windows
+
+Download Gap-Aid-v2.0.exe from [Releases](https://github.com/panlab-bioinfo/Gap-Aid/releases) then execute
+
+2.Mac
+
+Download Gap-Aid-v2.0.pkg from [Releases](https://github.com/panlab-bioinfo/Gap-Aid/releases) then execute
+
+3.Linux
+Download Gap-Aid-v2.0.tar.gz from [Releases](https://github.com/panlab-bioinfo/Gap-Aid/releases)
+```
+tar -zxvf Gap-Aid-v2.0.tar.gz
+cd Gap-Aid
+conda env create -f environment.yml
+conda activate gapaid
+chmod +x Gap-Aid
+./Gap-Aid
+```
+
+<details>
+<summary><b>Run from source</b></summary>
+
+    git clone https://github.com/panlab-bioinfo/Gap-Aid.git
+    cd Gap-Aid
+    conda env create -f environment.yml
+    conda activate gapaid
+    chmod +x Gap-Aid.py
+    ./Gap-Aid.py
+
+</details>
 *example.tar.gz* is an example for Gap-Aid, it applies to visualization programs, not to preprocessing programs.
 
 usage:
