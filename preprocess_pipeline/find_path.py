@@ -13,7 +13,7 @@ import argparse
 parser = argparse.ArgumentParser(description='Automatic path finding.')
 # optional
 parser.add_argument('-p', '--prefix', type=str, metavar='', default="gap-aid",
-                    help='The prefix of generated file. default: gapo-aid')
+                    help='The prefix of generated file. default: gap-aid')
 parser.add_argument('-n', '--number', type=int, metavar='', default=5,
                     help='The number of nodes selected in each iteration. default: 5')
 parser.add_argument('-i', '--iteration', type=int, metavar='', default=100,
@@ -25,10 +25,10 @@ parser.add_argument('-i', '--iteration', type=int, metavar='', default=100,
 # map_score = sys.argv[3]
 # ovlp_score = sys.argv[4]
 
-# parser.add_argument('gap_position', help='gap_position file.')
-# parser.add_argument('map_file', help='reads map chrosomes paf file.')
-# parser.add_argument('map_score', help='reads map chrosomes score file.')
-# parser.add_argument('ovlp_score', help='reads overlap score file.')
+parser.add_argument('gap_position', help='gap_position file.')
+parser.add_argument('map_file', help='reads map chrosomes paf file.')
+parser.add_argument('map_score', help='reads map chrosomes score file.')
+parser.add_argument('ovlp_score', help='reads overlap score file.')
 
 args = parser.parse_args()
 
@@ -191,14 +191,11 @@ prefix=args.prefix
 select_num = args.number
 iteration = args.iteration
 
-# gap_position = args.gap_position
-# map_file = args.map_file
-# map_score = args.map_score
-# ovlp_score = args.ovlp_score
-gap_position="/data/zhaoxianjia/project/t2t/test/sencond_test/mannual.chr.fa.infor.txt"
-map_file="/data/zhaoxianjia/project/t2t/test/sencond_test/rc.map.final.paf"
-map_score="/data/zhaoxianjia/project/t2t/test/sencond_test/rc.map.score.txt"
-ovlp_score="/data/zhaoxianjia/project/t2t/test/sencond_test/test.ovlp.score.txt"
+gap_position = args.gap_position
+map_file = args.map_file
+map_score = args.map_score
+ovlp_score = args.ovlp_score
+
 
 my_graph.load_shore(gap_position, map_file)
 

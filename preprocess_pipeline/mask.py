@@ -4,12 +4,11 @@ import os
 fa=sys.argv[1]
 mask_length=int(sys.argv[2])
 
-# fa="/data/zhaoxianjia/project/t2t/06_TAIR/ragtag_output/tair.scaffold.v1.fa"
 # mask_length=500000
 
 def mask(fa,length):
     file_name = os.path.basename(fa)
-    with open(fa,"r") as f,open(file_name+".infor.txt","w") as fw,open(file_name+"_masked","w") as fo:
+    with open(fa,"r") as f,open(file_name+".infor.txt","w") as fw:
         name=None
         seqs=[]
         for line in f:
@@ -32,6 +31,7 @@ def mask(fa,length):
                         fw.write(f"{name}\t{start}\t{seq_len-1}\t{seq_len-1-start}\n")
                         gap.append((start, seq_len-1))
                     if length>0:
+                        fo=open(file_name+"_masked","w")
                         seqs=[]
                         pre_start=0
                         for s, e in gap:
@@ -45,7 +45,7 @@ def mask(fa,length):
                         fo.write("".join(seqs))
                         fo.write("\n")                    
                     seqs=[]
-                name=line.strip()[1:]
+                name=line.strip().split()[0][1:]
             else:
                 seqs.append(line.strip())
         gap = []
@@ -76,6 +76,7 @@ def mask(fa,length):
             fo.write(">"+name+"\n")
             fo.write("".join(seqs))
             fo.write("\n")  
+            fo.close()
 
 if __name__=='__main__':
     mask(fa,length=mask_length)

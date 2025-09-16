@@ -31,7 +31,6 @@ from qfluentwidgets import PushButton, StrongBodyLabel, TeachingTipView, Teachin
 from qfluentwidgets import FluentIcon as FIF
 import warnings
 warnings.filterwarnings("ignore")
-# import qdarkgraystyle
 svgwidth = 0
 svghight = 0
 
@@ -40,7 +39,8 @@ class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.resize(1523, 810)
         MainWindow.setWindowTitle("Gap-Aid")
-        icon = QIcon(r'./source/LOGO.png')
+        self.script_dir = os.path.dirname(os.path.abspath(__file__))
+        icon = QIcon(fr'{self.script_dir}/source/LOGO.png')
         MainWindow.setWindowIcon(icon)
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.verticalLayout_3 = QtWidgets.QVBoxLayout(self.centralwidget)
@@ -48,9 +48,9 @@ class Ui_MainWindow(object):
         self.horizontalLayout_5 = QtWidgets.QHBoxLayout()
         self.horizontalLayout_5.setObjectName("horizontalLayout_5")
         self.folder_icon = QIcon()
-        self.folder_icon.addPixmap(QPixmap("./source/folder.png"))
+        self.folder_icon.addPixmap(QPixmap(f"{self.script_dir}/source/folder.png"))
         self.help_icon = QIcon()
-        self.help_icon.addPixmap(QPixmap("./source/help.png"))
+        self.help_icon.addPixmap(QPixmap(f"{self.script_dir}/source/help.png"))
         self.horizontalLayout = QtWidgets.QHBoxLayout()
         self.horizontalLayout.setObjectName("horizontalLayout")
         self.lineEdit = QLineEdit()
@@ -119,8 +119,9 @@ class Ui_MainWindow(object):
         self.pushButton_15.setToolTip("If this gap can be automatically filled, this feature will show the paths to fill the gap")
         self.pushButton_15.clicked.connect(self.get_paths)
         self.horizontalLayout_7.addWidget(self.pushButton_15)
+        self.horizontalLayout_7.setStretch(0, 1)
         self.horizontalLayout_7.setStretch(1, 1)
-        self.horizontalLayout_7.setStretch(2, 1)
+        self.horizontalLayout_7.setStretch(2, 3)
         self.horizontalLayout_7.setStretch(3, 1)
         self.verticalLayout_3.addLayout(self.horizontalLayout_7)
         self.horizontalLayout_11 = QtWidgets.QHBoxLayout()
@@ -228,8 +229,11 @@ class Ui_MainWindow(object):
         self.verticalLayout_2.addWidget(self.graphicsView)
         self.mdi = QVBoxLayout()
         self.mdi2 = QtWidgets.QStackedWidget(self.centralwidget)
-        self.mdi2.setStyleSheet(
-            '''QStackedWidget{border-image:url(./source/background1.png);background-color: rgb(237, 234, 232)}''')
+        style = f'''QStackedWidget {{
+                    border-image: url("{self.script_dir}/source/background1.png");
+                    background-color: rgb(237, 234, 232);
+                }}'''
+        self.mdi2.setStyleSheet(style)
         self.mdi.addWidget(self.mdi2)
         self.mdi3 = QVBoxLayout()
         self.treeView_3 = MyTableWidget()
@@ -388,11 +392,6 @@ class Ui_MainWindow(object):
         return sum(result)+t6
 
     def index_genome(self, genome):
-        # self.comboBox.clear()
-        if os.path.exists(genome+".infor.txt") == False:
-            argues = ["./bin/find_gap.exe", genome, genome+".infor.txt"]
-            result = subprocess.Popen(argues)
-            result.wait()
         with open(genome+".infor.txt") as f:
             for line in f:
                 if len(line.split()) > 3:
@@ -546,10 +545,19 @@ class Ui_MainWindow(object):
                 return
 
         if self.passed:
+            linelist = self.content[index.row()].split()
+            qid = linelist[0]
+            ql = int(linelist[1])
+            ref_s = int(linelist[7])
+            ref_e = int(linelist[8])
+            que_s = int(linelist[2])
+            que_e = int(linelist[3])
+            direction = linelist[4]
             if len(self.ID_left) == 0:
                 qid = "right"
             else:
                 qid = "left"
+            # print(qid, -1, (que_s, que_e), (ref_s, ref_e), direction)
             self.join_path_infor[qid] = [
                 qid, -1, (que_s, que_e), (ref_s, ref_e), direction]
             # print(self.join_path_infor)
@@ -1059,15 +1067,17 @@ class Ui_MainWindow(object):
         chr_info = self.merge_result
         scf_file = self.genome_seq
         output = scf_file+'_gap_filling_version.fa'
+        filled_seq=scf_file+'_filled_seq.fa'
         fa = open(scf_file, "r")
         fo = open(output, "w")
+        fo2=open(filled_seq,"w")
         seqs = []
         first=True
         for line in fa:
             line=line.strip()
             if line[0] == '>':
                 if first:
-                    name = line[1:]
+                    name = line.split()[0][1:]
                     first=False
                 else:
                     seq="".join(seqs)
@@ -1076,10 +1086,18 @@ class Ui_MainWindow(object):
                         final_seqs = []
                         s = 0
                         for item in v:
+                            fo2.write(f">{name} {item[0]}-{item[1]}\n")
+                            fo2.write(item[2])
+                            fo2.write("\n")
+                            if item[0] ==0:
+                                final_seqs.append(item[2])
+                                s=item[1]
+                                continue
                             final_seqs.append(seq[s:item[0]])
                             final_seqs.append(item[2])
                             s = item[1]
-                        final_seqs.append(seq[s:])
+                        if v[-1][1] != -1:
+                            final_seqs.append(seq[s:])
                         fo.write(f">{name}\n")
                         fo.write("".join(final_seqs))
                         fo.write("\n")
@@ -1087,7 +1105,7 @@ class Ui_MainWindow(object):
                         fo.write(f">{name}\n")
                         fo.write(seq)
                         fo.write("\n")
-                    name=line[1:]
+                    name = line.split()[0][1:]
                     seqs=[]
                     del seq
             else:
@@ -1098,6 +1116,9 @@ class Ui_MainWindow(object):
             final_seqs = []
             s = 0
             for item in v:
+                fo2.write(f">{name} {item[0]}-{item[1]}\n")
+                fo2.write(item[2])
+                fo2.write("\n")
                 if item[0] ==0:
                     final_seqs.append(item[2])
                     s=item[1]
@@ -1116,6 +1137,7 @@ class Ui_MainWindow(object):
             fo.write("\n")
         fa.close()
         fo.close()
+        fo2.close()
         self.pushButton_10.setText('       finished !!')
 
 
@@ -1127,7 +1149,7 @@ class Ui_MainWindow(object):
         # self.actionA.setText(QCoreApplication.translate("MainWindow", "add this ID as a candidate"))
         self.groupBox_menu.addAction(self.actionA)
 
-        self.actionC = QAction(QIcon('./source/help.png'), 'Help')
+        self.actionC = QAction(QIcon(f'{self.script_dir}/source/help.png'), 'Help')
         self.groupBox_menu.addAction(self.actionC)
 
         self.actionA.triggered.connect(self.candidate)  # 将右键添加的功能连接到相应功能
@@ -1143,7 +1165,7 @@ class Ui_MainWindow(object):
         self.actionB = QAction('show detail alignment information')
         self.groupBox_menu.addAction(self.actionB)
 
-        self.actionC = QAction(QIcon('./source/help.png'), 'Help')
+        self.actionC = QAction(QIcon(f'{self.script_dir}/source/help.png'), 'Help')
         self.groupBox_menu.addAction(self.actionC)
 
         self.actionA.triggered.connect(self.candidate)  # 将右键添加的功能连接到相应功能
@@ -1248,6 +1270,7 @@ class Ui_MainWindow(object):
             self.comboBox_2.addItems(self.gap_num[ID])
         # a.close()
     def show_potentials(self):
+        self.left_start = 1
         self.ID_check = 0
         self.readvsread_y = {}
         self.light_list = []
@@ -2059,8 +2082,7 @@ class Ui_MainWindow(object):
                     if self.Congratulations == 0:
                         content = 'This ID can span the gap, and you can click the "fix the gap" button on the right to fill the gap'
                         w = InfoBar.success(title='Congratulations!', content=content, isClosable=True,
-                                            duration=4000, position=InfoBarPosition.BOTTOM, parent=self.graphicsView)
-
+                                            duration=10000, position=InfoBarPosition.BOTTOM, parent=self.graphicsView)
                         self.fix_gap_button = PushButton('fix the gap')
                         self.fix_gap_button.clicked.connect(
                             lambda: self.cross_id_fix(path=path))
@@ -2073,7 +2095,7 @@ class Ui_MainWindow(object):
                     elif time.time()-self.time >= 2:
                         content = 'This ID can span the gap, and you can click the "fix the gap" button on the right to fill the gap'
                         w = InfoBar.success(title='Congratulations!', content=content, isClosable=True,
-                                            duration=4000, position=InfoBarPosition.BOTTOM, parent=self.graphicsView)
+                                            duration=10000, position=InfoBarPosition.BOTTOM, parent=self.graphicsView)
 
                         self.fix_gap_button = PushButton('fix the gap')
                         # self.fix_gap_button.setFixedSize(100, 50)  # 设置按钮大小为 100x50
@@ -2619,6 +2641,7 @@ class Ui_MainWindow(object):
                 ID = item.text()
                 if ID in self.join_path_infor:
                     del self.join_path_infor[ID]
+                    self.target_list.remove(ID)
                 self.treeView.removeRow(self.add_pathway-1)
                 self.treeView.removeRow(self.add_pathway)
                 self.add_pathway -= 1
