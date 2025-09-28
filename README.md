@@ -68,7 +68,7 @@ cd Gap-Aid/preprocess_pipeline
 chmod + x *.sh
 ```
 
-We provide two distinct preprocessing scripts: ```pipeline.sh``` and ```pipeline_hifiasm.sh```. These scripts utilize ```minimap2``` and ```hifiasm``` respectively to generate read overlaps. We recommend using ```pipeline_hifiasm.sh``` as it operates more efficiently and performs read error correction..
+We provide two different preprocessing scripts: ```pipeline.sh``` and ```pipeline_hifiasm.sh```. They use ``minimap2`` and ```hifiasm``` respectively to generate overlaps between reads. We recommend using ```pipeline_hifiasm.sh``` because it runs faster and can perform error correction on reads.
 
 Run ```pipeline.sh``` or ```pipeline_hifiasm.sh```  with full paths or add pipeline.sh to environment PATH.
 
