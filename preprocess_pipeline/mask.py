@@ -8,6 +8,8 @@ mask_length=int(sys.argv[2])
 
 def mask(fa,length):
     file_name = os.path.basename(fa)
+    if length>0:
+        fo=open(file_name+"_masked","w")
     with open(fa,"r") as f,open(file_name+".infor.txt","w") as fw:
         name=None
         seqs=[]
@@ -31,7 +33,6 @@ def mask(fa,length):
                         fw.write(f"{name}\t{start}\t{seq_len-1}\t{seq_len-1-start}\n")
                         gap.append((start, seq_len-1))
                     if length>0:
-                        fo=open(file_name+"_masked","w")
                         seqs=[]
                         pre_start=0
                         for s, e in gap:
