@@ -265,8 +265,9 @@ usage:
 tar -zxvf example.tar.gz
 #Select the example directory in the Gap-Aid
 ```
+### Using detail
 
+Correct alignments are typically located near the gap boundaries and exhibit longer alignment lengths, whereas incorrect alignments appear at more random genomic positions with much shorter aligned segments.
+![Visualization capability of Gap-Aid demonstrated using real sequencing data](./fig1.jpg)
+As illustrated in the Figure, panels A and B display read-to-chromosome alignments, where panel A represents a correct alignment and panel B an incorrect one. Panel C presents the visualization of read-to-read alignments. The yellow area, right alignment; the red area, wrong alignment; the red dashed box, alignments.
 
-<!--*Gap-Aid-v2.0.exe* is a binary program under Windows.-->
-
-*Gap-Aid-v2.0.pkg* is a binary program under Mac.
