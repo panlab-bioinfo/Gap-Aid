@@ -1,0 +1,14 @@
+name: gapaid
+channels:
+  - defaults
+  - conda-forge
+  - bioconda
+dependencies:
+  - python=3.9
+  - pip
+
+  - pip:
+      - pyfastx
+      - PyQt5
+      - PyQt-Fluent-Widgets
+      - pyqtgraph
