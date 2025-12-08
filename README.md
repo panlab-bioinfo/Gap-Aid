@@ -2,51 +2,6 @@
 
 Gap-Aid provides an interactive visualization tool for displaying the alignments between long reads and genomic regions of gaps. Upon user selection of alignment information, Gap-Aid automatically presents the next round of alignments, progressively constructing the assembly path to complete the gap-filling process. 
 
-
-## Installation
-
-
-
-
-1.Windows
-
-Download Gap-Aid-v2.0.exe from [Releases](https://github.com/panlab-bioinfo/Gap-Aid/releases) then execute
-
-2.Mac
-
-Download Gap-Aid-v2.0.pkg from [Releases](https://github.com/panlab-bioinfo/Gap-Aid/releases) then execute
-
-3.Linux
-Download Gap-Aid-v2.0.tar.gz from [Releases](https://github.com/panlab-bioinfo/Gap-Aid/releases)
-```
-tar -zxvf Gap-Aid-v2.0.tar.gz
-cd Gap-Aid
-conda env create -f environment_linux.yml
-conda activate gapaid
-chmod +x Gap-Aid
-./Gap-Aid
-```
-
-<details>
-<summary><b>Run from source</b></summary>
-
-    git clone https://github.com/panlab-bioinfo/Gap-Aid.git
-    cd Gap-Aid
-    conda env create -f environment_{Platform}.yml && conda activate gapaid
-    
-    or create a environment with
-    ```
-    conda create -n gapaid python=3.9
-    conda activate gapaid
-    pip install pyfastx PyQt5 PyQt-Fluent-Widgets pyqtgraph
-    ```
-
-    chmod +x Gap-Aid.py
-    ./Gap-Aid.py
-
-</details>
-
-
 ## Preprocessing
 
 The preprocess program  can only be used on Linux systems
@@ -228,27 +183,10 @@ OPTIONS:
 ## Using Gap-Aid
 
 ### Installation
-1.Windows
-
-Download Gap-Aid-v2.0.exe from [Releases](https://github.com/panlab-bioinfo/Gap-Aid/releases) then execute
-
-2.Mac
-
-Download Gap-Aid-v2.0.pkg from [Releases](https://github.com/panlab-bioinfo/Gap-Aid/releases) then execute
-
-3.Linux
-Download Gap-Aid-v2.0.tar.gz from [Releases](https://github.com/panlab-bioinfo/Gap-Aid/releases)
-```
-tar -zxvf Gap-Aid-v2.0.tar.gz
-cd Gap-Aid
-conda env create -f environment.yml
-conda activate gapaid
-chmod +x Gap-Aid
-./Gap-Aid
-```
+Get the version corresponding to the system from the [Releases](https://github.com/panlab-bioinfo/Gap-Aid/releases) and Install per the corresponding system version requirements.
 
 <details>
-<summary><b>Run from source</b></summary>
+<summary><b>or Run from source</b></summary>
 
     git clone https://github.com/panlab-bioinfo/Gap-Aid.git
     cd Gap-Aid
