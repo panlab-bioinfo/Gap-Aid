@@ -360,11 +360,11 @@ if [ ! -f "step2.2_done.tag" ]; then
         ${minimap2} ${map_arg} -t ${threads} ${orig_fasta}_masked ${orig_reads} >${prefix}_useless_map.paf 2>useless_map.log
         awk -v mapq=$MapQ -v ar=$aligned_ratio '{if ($12 > mapq && $11 / $2 > ar) print $1}' ${prefix}_useless_map.paf | sort | uniq >filtered_reads.txt
         seqkit grep -v -w 0 -j ${threads} -f filtered_reads.txt $orig_reads >${prefix}_useful.reads.fa
-        grep -vFf filtered_reads.txt ${prefix}.map.sim.paf | cut -f1-12 > ${prefix}.map.filter.paf
+        awk 'NR==FNR{a[$1];next} !($1 in a)' filtered_reads.txt ${prefix}.map.paf | cut -f1-12 > ${prefix}.map.sim.paf
         mv ${prefix}.map.filter.paf ${prefix}.map.sim.paf
 
         split -l 1000000 ${paf_file} ovlp_chunk_
-        ls ovlp_chunk_* | parallel -j 8 "grep -vFf filtered_reads.txt {} | cut -f1-12 > {}.filtered"
+        ls ovlp_chunk_* | parallel -j 8 'awk '\''NR==FNR{a[$1];next} !($1 in a) && !($6 in a)'\'' filtered_reads.txt {} | cut -f1-12 > {}.filtered'
         cat ovlp_chunk_*.filtered > ${prefix}.ovlp.sim.paf
         rm ovlp_chunk_*
         if [ $? -ne 0 ]; then

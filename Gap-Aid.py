@@ -758,7 +758,7 @@ class Ui_MainWindow(object):
                 self.path_order +=1              
                
         else:
-            content='You need to run auto_find_path.py first and put the resulting file in the workdir directory'
+            content='You need to run find_path.py first and put the resulting file in the workdir directory'
             w = InfoBar.warning(title='warning!', content=content, isClosable=True,
                             duration=20000, position=InfoBarPosition.BOTTOM, parent=self.graphicsView)
             w.show()

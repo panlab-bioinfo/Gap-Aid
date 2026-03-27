@@ -139,7 +139,7 @@ fi
 mkdir -p ${prefix}_workdir && cd ${prefix}_workdir
 ln -sf ${workdir}/${prefix}.chr.fa ./${prefix}.chr.fa
 ln -sf ${workdir}/${prefix}.chr.fa.infor.txt ./${prefix}.chr.fa.infor.txt
-ln -sf ${workdir}/max_reads.txt .max_reads.txt
+ln -sf ${workdir}/max_reads.txt max_reads.txt
 ln -sf ../*filter*.final.paf* .
 ln -sf ../*filter*.score.txt* .
 
