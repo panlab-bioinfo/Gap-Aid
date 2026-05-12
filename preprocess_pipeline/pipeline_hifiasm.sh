@@ -303,7 +303,7 @@ else
             exit 1
         fi
         orig_reads=${prefix}.asm.ec.fa
-        paf_file=${prefix}.asm..ovlp.paf
+        paf_file=${prefix}.asm.ovlp.paf
     fi
 fi
 
